@@ -1,23 +1,23 @@
 services:
-  BOT_NAME:  # NAME
+  football_bot:  # NAME
     build:
       context: .
-    container_name: BOT_NAME # NAME
+    container_name: football_bot # NAME
     stop_signal: SIGKILL
     ports:
-      - 5003:5003 # PORTS
+      - 5012:5012 # PORTS
     networks:
       - webnet
     depends_on:
       - postgres
     volumes:
-      - ./report_bot:/telegram_bot
+      - ../football_bot:/telegram_bot
     environment:
-      - LOCAL_ENV=prod
+      - LOCAL_ENV=local
 
   postgres:
     image: postgres
-    container_name: BOT_postgres # NAME
+    container_name: football_postgres # NAME
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
