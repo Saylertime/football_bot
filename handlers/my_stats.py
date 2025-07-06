@@ -77,8 +77,10 @@ async def me_games_func(callback):
         return
     msg = (
         f"⚽ Голы: {stats['goals']}\n"
-        f"🤝 Ассиисты: {stats['assists']}"
+        f"🤝 Ассисты: {stats['assists']}\n"
     )
+    if stats["autogoals"]:
+        msg += f"🤡 Автоголы: {stats['autogoals']}"
     markup = create_markup(buttons_back)
     await message.edit_text(msg, reply_markup=markup, parse_mode="Markdown")
 

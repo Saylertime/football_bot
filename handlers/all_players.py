@@ -86,5 +86,6 @@ async def changed_name_func(message, state):
         return
 
     await change_players_name(new_name, player_id)
-    await message.answer(f"✅ Имя изменено на «{new_name}».")
     await state.clear()
+    markup = create_markup(buttons_back)
+    await message.answer(f"✅ Имя изменено на «{new_name}».", reply_markup=markup)

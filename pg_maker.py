@@ -45,6 +45,7 @@ async def create_schema():
                 player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE RESTRICT,
                 goals     INTEGER NOT NULL DEFAULT 0,
                 assists   INTEGER NOT NULL DEFAULT 0,
+                autogoals   INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (game_id, player_id)
             );
         """)
@@ -155,7 +156,7 @@ async def all_my_games(player_id):
 async def my_stats_in_match(player_id, game_id):
     async with db_connection() as conn:
         sql = """ 
-        SELECT goals, assists from game_player_stats s
+        SELECT goals, assists, autogoals from game_player_stats s
         JOIN games g ON g.id = s.game_id
         WHERE player_id = $1 AND game_id = $2 
         """
@@ -212,6 +213,19 @@ async def add_assist(game_id, player_id, count=1):
         await conn.execute(sql, game_id, player_id, count)
 
 
+async def add_autogoal(game_id, player_id, count=1):
+    async with db_connection() as conn:
+        sql = """
+        INSERT INTO game_player_stats
+          (game_id, player_id, goals, assists, autogoals)
+        VALUES
+          ($1, $2, 0, 0, $3)
+        ON CONFLICT (game_id, player_id) DO UPDATE
+          SET autogoals = game_player_stats.autogoals + $3;
+        """
+        await conn.execute(sql, game_id, player_id, count)
+
+
 async def find_players_without_game(game_id):
     async with db_connection() as conn:
         sql = """
@@ -252,7 +266,8 @@ async def results_of_the_game(game_id):
               p.name,
               p.username,
               s.goals,
-              s.assists
+              s.assists,
+              s.autogoals
             FROM game_player_stats s
             JOIN players p ON p.id = s.player_id
             WHERE s.game_id = $1
@@ -270,7 +285,11 @@ async def results_of_the_game(game_id):
             username = f"@{r['username']}" or ""
             goals = r["goals"]
             assists = r["assists"]
-            msg += f"{num + 1}. {name} — {username} | Голов: {goals} | Ассистов: {assists}\n\n"
+            autogoals = r["autogoals"]
+            msg += (f"{num + 1}. {name} — {username}: \n"
+                    f"⚽ Голы: {goals}\n"
+                    f"🤝 Ассисты: {assists}\n"
+                    f"🤡 Автоголов: {autogoals}\n\n")
 
         return msg
 

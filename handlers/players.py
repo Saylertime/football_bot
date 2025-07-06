@@ -22,7 +22,7 @@ async def players_func(message):
     buttons = [
         ("👤 Добавить игрока в базу", "new_player"),
         ("👉🏻🗑️ Удалить игрока", "delete_player"),
-        ("👥Все игроки", "all_players"),
+        ("👥 Все игроки", "all_players"),
     ]
     buttons.extend(buttons_back)
     markup = create_markup(buttons)

@@ -7,7 +7,7 @@ from states.overall import OverallState
 from utils.calend import MONTHS_GENITIVE
 from pg_maker import (all_games, find_players_without_game, find_players_in_game,
                       register_player_in_game, unregister_player_from_game,
-                      add_goal, add_assist, results_of_the_game, delete_game)
+                      add_goal, add_assist, add_autogoal, results_of_the_game, delete_game)
 
 
 router_all_games = Router()
@@ -48,6 +48,7 @@ async def one_game(callback):
         ("❌ Убрать игрока", f"remove_player__{game_id}__{played_at}"),
         ("⚽ Гол", f"add_goal__{game_id}__{played_at}"),
         ("🤝 Ассист", f"add_assist__{game_id}__{played_at}"),
+        ("🤡 Автогол", f"add_autogoal__{game_id}__{played_at}"),
         ("📊 Статистика", f"results__{game_id}__{played_at}"),
         ("🗑️ Удалить игру", f"game_delete__{game_id}__{played_at}"),
         ("↩️ Назад в меню", "start"),
@@ -147,6 +148,30 @@ async def assist_func(callback):
     buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons)
     await callback.message.edit_text("Красиво раздаёт пасы!", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("add_autogoal__"))
+async def add_autogoal_func(callback):
+    game_id = int(callback.data.split("__")[1])
+    played_at = callback.data.split("__")[2]
+    players_in_game = await find_players_in_game(int(game_id))
+    buttons = [
+        (player["name"], f"autogoal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
+    ]
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Кто забил в свои ворота?", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("autogoal__"))
+async def autogoal_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    await add_autogoal(game_id, player_id)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text("Подставил команду...", reply_markup=markup)
+
 
 
 @router_all_games.callback_query(F.data.startswith("results__"))
