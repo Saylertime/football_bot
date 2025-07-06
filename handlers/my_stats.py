@@ -20,20 +20,29 @@ buttons_back = [
 ]
 
 
-@router_my_stats.message(Command("my_stats"))
-@router_my_stats.callback_query(F.data == "my_stats")
-async def my_stats_func(message):
+@router_my_stats.message(Command("stats"))
+@router_my_stats.callback_query(F.data == "stats")
+async def stats_func(message):
     if isinstance(message, CallbackQuery):
         message = message.message
 
+    buttons = [
+        ("📊 Моя статистика", "my_stats"),
+        ("🌐 Общая стата за всё время", "general_stats"),
+    ]
+    markup = create_markup(buttons)
+    await message.edit_text("Что смотрим?", reply_markup=markup)
+
+
+@router_my_stats.callback_query(F.data.startswith("my_stats"))
+async def my_stats_func(callback):
     buttons = [
         ("📈 Стата за матч", "match_stats"),
         ("🌐 Стата за всё время", "all_time_stats"),
         ("↩️ Назад в меню", "start"),
     ]
     markup = create_markup(buttons)
-
-    await message.edit_text("Что смотрим?", reply_markup=markup)
+    await callback.message.edit_text("Что смотрим?", reply_markup=markup)
 
 
 @router_my_stats.callback_query(F.data.startswith("match_stats"))

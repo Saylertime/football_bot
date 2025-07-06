@@ -13,12 +13,21 @@ from pg_maker import (all_games, find_players_without_game, find_players_in_game
 router_all_games = Router()
 
 
-@router_all_games.message(Command("all_games"))
-@router_all_games.callback_query(F.data == "all_games")
-async def all_games_func(message, state):
+@router_all_games.message(Command("games"))
+@router_all_games.callback_query(F.data == "games")
+async def games_func(message, state):
     if isinstance(message, CallbackQuery):
         message = message.message
+    buttons = [
+        ("🎮 Новая игра", "add_game"),
+        ("🍿 Все игры", "all_games"),
+    ]
+    markup = create_markup(buttons)
+    await message.edit_text("Что делаем?", reply_markup=markup)
 
+
+@router_all_games.callback_query(F.data.startswith("all_games"))
+async def all_games_func(callback, state):
     games = await all_games()
     buttons = []
     for game in games:
@@ -27,7 +36,7 @@ async def all_games_func(message, state):
         buttons.append((label, f"games__{game['id']}__{label}"))
     buttons.append(("↩️ Назад в меню", "start"))
     markup = create_markup(buttons, columns=3)
-    await message.edit_text("Все игры", reply_markup=markup)
+    await callback.message.edit_text("Все игры", reply_markup=markup)
 
 
 @router_all_games.callback_query(F.data.startswith("games__"))
