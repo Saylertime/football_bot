@@ -1,10 +1,12 @@
 from aiogram import Router, F
+from aiogram import types
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from keyboards.reply.create_markup import create_markup
 from states.overall import OverallState
-from pg_maker import all_players, my_general_stats
+from pg_maker import all_players, change_players_name, my_general_stats
 
 
 router_all_players = Router()
@@ -20,15 +22,6 @@ buttons_back = [
 async def all_players_func(message):
     if isinstance(message, CallbackQuery):
         message = message.message
-
-
-    buttons = [
-        ("👤 Добавить игрока в базу", "new_player"),
-        ("👉🏻🗑️ Удалить игрока", "delete_player"),
-        ("👥Все игроки", "all_players"),
-        ]
-
-
 
     players = await all_players()
     buttons = [(name["name"], f"players__{name['username']}__{name['id']}__{name['name']}") for name in players]
@@ -47,6 +40,7 @@ async def player_func(callback):
     name = callback.data.split("__")[3]
     buttons = [
         ("📈 Посмотреть стату", f"see_stats__{player_id}__{name}"),
+        ("⚙️ Изменить имя", f"change_name__{player_id}__{name}"),
         ("🗑 Удалить из базы", f"delete__{name}"),
         ]
     buttons.extend(buttons_back)
@@ -71,3 +65,26 @@ async def see_stats_func(callback):
         )
     markup = create_markup(buttons_back)
     await message.edit_text(msg, reply_markup=markup, parse_mode="Markdown")
+
+
+@router_all_players.callback_query(F.data.startswith("change_name"))
+async def change_name_func(callback, state):
+    player_id = int(callback.data.split("__")[1])
+    await state.update_data(player_id=player_id)
+    await callback.message.edit_text("Введи новое имя")
+    await state.set_state(OverallState.change_name)
+
+
+@router_all_players.message(OverallState.change_name)
+async def changed_name_func(message, state):
+    new_name = message.text.strip()
+
+    data = await state.get_data()
+    player_id = data.get("player_id")
+    if player_id is None:
+        await message.answer("❗ Что-то пошло не так, попробуй ещё раз.")
+        return
+
+    await change_players_name(new_name, player_id)
+    await message.answer(f"✅ Имя изменено на «{new_name}».")
+    await state.clear()

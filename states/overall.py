@@ -7,3 +7,4 @@ class OverallState(StatesGroup):
     start = State()
     new_player = State()
     add_game = State()
+    change_name = State()

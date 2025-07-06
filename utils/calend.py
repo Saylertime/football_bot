@@ -2,6 +2,12 @@ import calendar
 from datetime import datetime, timedelta
 
 
+MONTHS_GENITIVE = {
+    1: "января",  2: "февраля", 3: "марта",    4: "апреля",
+    5: "мая",     6: "июня",    7: "июля",     8: "августа",
+    9: "сентября",10: "октября",11: "ноября",   12: "декабря",
+}
+
 def previous_month():
     current_date = datetime.now()
     previous_month_date = current_date - timedelta(days=current_date.day)

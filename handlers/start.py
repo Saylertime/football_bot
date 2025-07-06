@@ -3,12 +3,15 @@ from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery
 from aiogram.enums.chat_type import ChatType
 
-from pg_maker import create_schema
-from keyboards.reply.create_markup import create_markup
 from config_data import config
+from pg_maker import create_schema, get_latest_game
+from utils.calend import MONTHS_GENITIVE
+from keyboards.reply.create_markup import create_markup
+
 
 router_start = Router()
 admins = config.ADMINS
+
 
 @router_start.message(CommandStart())
 @router_start.callback_query(F.data == "start")
@@ -22,16 +25,28 @@ async def command_start_handler(message):
     print(message.chat.id)
     print(message.chat.title)
 
+    current_game = None
+
+    try:
+        current_game = await get_latest_game()
+        game_id = str(current_game["id"])
+        played_at = current_game.get("played_at")
+        label = f"{played_at.day:02d} {MONTHS_GENITIVE[played_at.month]} {played_at.year}"
+    except:
+        print("Нет текущей игры")
+
     buttons = [
-        # ("👤 Добавить игрока в базу", "new_player"),
-        # ("👉🏻🗑️ Удалить игрока", "delete_player"),
-        ("👥Игроки", "players"),
-        ("🎮 Новая игра", "add_game"),
         ("🍿 Все игры", "all_games"),
+        ("🎮 Новая игра", "add_game"),
+        ("👥Игроки", "players"),
         ("📊 Моя статистика", "my_stats"),
         ("🌐 Общая стата за всё время", "general_stats"),
         ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
     ]
+
+    if current_game:
+        current_game_button = ("⚽💥 Текущая игра", f"games__{game_id}__{label}")
+        buttons.insert(0, current_game_button)
 
     # buttons_for_admins = [
     #     ("💬 СООБЩЕНИЕ В ЧАТ", "message"),

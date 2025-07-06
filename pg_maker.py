@@ -327,3 +327,13 @@ async def all_chats():
         """
         rows = await conn.fetch(sql)
         return [dict(row) for row in rows]
+
+
+async def change_players_name(name, player_id):
+    async with db_connection() as conn:
+        sql = """
+        UPDATE players
+        SET name = $1
+        WHERE id = $2;
+        """
+        await conn.execute(sql, name, player_id)

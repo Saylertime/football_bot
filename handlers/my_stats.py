@@ -4,6 +4,7 @@ from aiogram.types import CallbackQuery
 
 from keyboards.reply.create_markup import create_markup
 from states.overall import OverallState
+from utils.calend import MONTHS_GENITIVE
 from pg_maker import (
     all_my_games, all_games,
     results_of_the_game, find_player_id,
@@ -17,12 +18,6 @@ buttons_back = [
     ("⬅️ Назад в статистику", "my_stats"),
     ("↩️ Назад в меню", "start"),
 ]
-
-MONTHS_GENITIVE = {
-    1: "января",  2: "февраля", 3: "марта",    4: "апреля",
-    5: "мая",     6: "июня",    7: "июля",     8: "августа",
-    9: "сентября",10: "октября",11: "ноября",   12: "декабря",
-}
 
 
 @router_my_stats.message(Command("my_stats"))

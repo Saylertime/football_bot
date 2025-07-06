@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery, Message
 from config_data import config
 from loader import bot
 from keyboards.reply.create_markup import create_markup
+from utils.calend import MONTHS_GENITIVE
 from pg_maker import (
     add_player,
     all_players,
@@ -18,26 +19,20 @@ from pg_maker import (
 
 router_message = Router()
 
-MONTHS_GENITIVE = {
-    1: "января",  2: "февраля", 3: "марта",    4: "апреля",
-    5: "мая",     6: "июня",    7: "июля",     8: "августа",
-    9: "сентября",10: "октября",11: "ноября",   12: "декабря",
-}
-
 CHATS = config.CHATS
 
 pluses = {}
 no_tracks = {}
 maybe_tracks = {}
 
-async def get_buttons(): # <<< ИЗМЕНЕНИЕ: убрали аргумент username
+async def get_buttons():
     game = await get_latest_game()
     game_id = game['id']
     return [
-        ("Иду",         f"yes__{game_id}"), # <<< ИЗМЕНЕНИЕ
-        ("Иду + 1",     f"yes_plus__{game_id}"), # <<< ИЗМЕНЕНИЕ
-        ("Не иду",      f"no__{game_id}"), # <<< ИЗМЕНЕНИЕ
-        ("Пока думаю",  f"maybe__{game_id}"), # <<< ИЗМЕНЕНИЕ
+        ("Иду",         f"yes__{game_id}"),
+        ("Иду + 1",     f"yes_plus__{game_id}"),
+        ("Не иду",      f"no__{game_id}"),
+        ("Пока думаю",  f"maybe__{game_id}"),
     ]
 
 async def get_msg() -> str:
@@ -96,8 +91,6 @@ async def get_msg() -> str:
 @router_message.message(Command("message"))
 @router_message.callback_query(F.data == "message")
 async def message_func(event):
-
-
     buttons = await get_buttons()
     markup = create_markup(buttons, columns=2)
     msg = await get_msg()
