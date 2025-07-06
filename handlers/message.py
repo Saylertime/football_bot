@@ -52,11 +52,11 @@ async def get_msg() -> str:
     game_date = game["played_at"]
     label = f"{game_date.day:02d} {MONTHS_GENITIVE[game_date.month]} {game_date.year}"
 
-    msg = f"*Игра во вторник ({label}). Кто в деле?*\n"
-    msg += f"Всего идут: *{total_going}*\n\n"
+    msg = f"<b>Игра во вторник ({label}). Кто в деле?</b>\n\n"
+    msg += f"Всего идут: <b>{total_going}</b>\n\n"
 
     # Идут
-    msg += "*Идут:*\n"
+    msg += "<b>Идут:</b>\n"
     if going:
         for idx, p in enumerate(going, 1):
             plus = ' +1' if p['username'] in plus_users else ''
@@ -65,7 +65,7 @@ async def get_msg() -> str:
         msg += "\n"
     msg += "\n"
     # Не идут
-    msg += "*Не идут:*\n"
+    msg += "<b>Не идут:</b>\n"
     if no_users:
         for idx, u in enumerate(no_users, 1):
             full_name = player_map.get(u, u)
@@ -74,11 +74,11 @@ async def get_msg() -> str:
         msg += "\n"
     msg += "\n"
     # Думают
-    msg += "*Думают:*\n"
+    msg += "<b>Думают:</b>\n"
     if maybe_users:
         for idx, u in enumerate(maybe_users, 1):
             full_name = player_map.get(u, u)
-            msg += f"{idx}. {full_name}\n"
+            msg += f"{idx}. {full_name} @{u if u else ''}\n"
     else:
         msg += "\n"
     url = "https://maps.app.goo.gl/gthro3uEh1rHKPAu7?g\\_st=it"
@@ -101,7 +101,7 @@ async def message_func(event):
             chat_id=chat["chat_id"],
             text=msg,
             reply_markup=markup,
-            parse_mode="Markdown"
+            parse_mode="HTML"
         )
 
 
@@ -141,6 +141,6 @@ async def toggle_player_in_game(event: CallbackQuery):
     markup = create_markup(buttons, columns=2)
     msg = await get_msg()
     try:
-        await event.message.edit_text(msg, reply_markup=markup, parse_mode="Markdown")
+        await event.message.edit_text(msg, reply_markup=markup, parse_mode="HTML")
     except Exception as e:
         print(f"Error editing message: {e}")
