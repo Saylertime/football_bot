@@ -60,7 +60,7 @@ async def get_msg() -> str:
     if going:
         for idx, p in enumerate(going, 1):
             plus = ' +1' if p['username'] in plus_users else ''
-            msg += f"{idx}. {p['name']}{plus}\n"
+            msg += f"{idx}. {p['name']} @{p['username']}{plus}\n"
     else:
         msg += "\n"
     msg += "\n"
@@ -69,8 +69,7 @@ async def get_msg() -> str:
     if no_users:
         for idx, u in enumerate(no_users, 1):
             full_name = player_map.get(u, u)
-            # print(full_name)
-            msg += f"{idx}. {full_name}\n"
+            msg += f"{idx}. {full_name} @{u}\n"
     else:
         msg += "\n"
     msg += "\n"
@@ -79,7 +78,7 @@ async def get_msg() -> str:
     if maybe_users:
         for idx, u in enumerate(maybe_users, 1):
             full_name = player_map.get(u, u)
-            msg += f"{idx}. {full_name}\n"
+            msg += f"{idx}. {full_name} @{u}\n"
     else:
         msg += "\n"
     url = "https://maps.app.goo.gl/gthro3uEh1rHKPAu7?g\\_st=it"
