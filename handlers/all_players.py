@@ -10,7 +10,7 @@ from pg_maker import all_players, my_general_stats
 router_all_players = Router()
 
 buttons_back = [
-    ("⬅️ Назад к игрокам", "all_players"),
+    ("⬅️ Назад к игрокам", "players"),
     ("↩️ Назад в меню", "start"),
 ]
 
@@ -21,9 +21,18 @@ async def all_players_func(message):
     if isinstance(message, CallbackQuery):
         message = message.message
 
+
+    buttons = [
+        ("👤 Добавить игрока в базу", "new_player"),
+        ("👉🏻🗑️ Удалить игрока", "delete_player"),
+        ("👥Все игроки", "all_players"),
+        ]
+
+
+
     players = await all_players()
     buttons = [(name["name"], f"players__{name['username']}__{name['id']}__{name['name']}") for name in players]
-    buttons.append(("↩️ Назад в меню", "start"))
+    buttons.extend(buttons_back)
     markup = create_markup(buttons, columns=3)
     try:
         await message.edit_text("Все игроки", reply_markup=markup)

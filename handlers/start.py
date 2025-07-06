@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery
+from aiogram.enums.chat_type import ChatType
 
 from pg_maker import create_schema
 from keyboards.reply.create_markup import create_markup
@@ -15,12 +16,16 @@ async def command_start_handler(message):
     if isinstance(message, CallbackQuery):
         message = message.message
     await create_schema()
-    # print(message.chat.id)
+
+    if message.chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
+        await add_chat(message.chat.title or "", str(message.chat.id))
+    print(message.chat.id)
+    print(message.chat.title)
 
     buttons = [
-        ("👤 Добавить игрока в базу", "new_player"),
+        # ("👤 Добавить игрока в базу", "new_player"),
         # ("👉🏻🗑️ Удалить игрока", "delete_player"),
-        ("👥 Все игроки", "all_players"),
+        ("👥Игроки", "players"),
         ("🎮 Новая игра", "add_game"),
         ("🍿 Все игры", "all_games"),
         ("📊 Моя статистика", "my_stats"),

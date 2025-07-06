@@ -23,6 +23,11 @@ async def db_connection():
 async def create_schema():
     async with db_connection() as conn:
         await conn.execute("""
+            CREATE TABLE IF NOT EXISTS chats (
+                title VARCHAR,
+                chat_id VARCHAR NOT NULL
+            );
+        
             CREATE TABLE IF NOT EXISTS players (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR NOT NULL,
@@ -43,6 +48,14 @@ async def create_schema():
                 PRIMARY KEY (game_id, player_id)
             );
         """)
+
+async def add_chat(title, chat_id):
+    async with db_connection() as conn:
+        sql = """
+        INSERT INTO chats (title, chat_id)
+        VALUES ($1, $2)
+        """
+        await conn.execute(sql, title, chat_id)
 
 
 async def add_game(played_at):

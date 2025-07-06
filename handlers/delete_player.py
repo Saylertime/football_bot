@@ -10,6 +10,10 @@ from pg_maker import all_players, delete_player
 
 router_delete_player = Router()
 
+buttons_back = [
+    ("⬅️ Назад к игрокам", "players"),
+    ("↩️ Назад в меню", "start"),
+]
 
 @router_delete_player.message(Command("delete_player"))
 @router_delete_player.callback_query(F.data == "delete_player")
@@ -19,7 +23,7 @@ async def delete_player_func(message):
 
     players = await all_players()
     buttons = [(name["name"], f"delete__{name['name']}") for name in players]
-    buttons.append(("↩️ Назад в меню", "start"))
+    buttons.extend(buttons_back)
     markup = create_markup(buttons, columns=3)
     try:
         await message.edit_text("Кого кикаем?", reply_markup=markup)

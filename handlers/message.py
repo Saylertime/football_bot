@@ -17,6 +17,12 @@ from pg_maker import (
 
 router_message = Router()
 
+MONTHS_GENITIVE = {
+    1: "января",  2: "февраля", 3: "марта",    4: "апреля",
+    5: "мая",     6: "июня",    7: "июля",     8: "августа",
+    9: "сентября",10: "октября",11: "ноября",   12: "декабря",
+}
+
 CHATS = config.CHATS
 
 pluses = {}
@@ -47,8 +53,10 @@ async def get_msg() -> str:
     going = [p for p in going_players if p['username'] not in maybe_users and p['username'] not in no_users]
     plus_count = len([u for u in plus_users if u in {p['username'] for p in going}])
     total_going = len(going) + plus_count
+    game_date = game["played_at"]
+    label = f"{game_date.day:02d} {MONTHS_GENITIVE[game_date.month]} {game_date.year}"
 
-    msg = f"*Игра ({game['played_at']}). Кто в деле?*\n"
+    msg = f"*Игра во вторник ({label}). Кто в деле?*\n"
     msg += f"Всего идут: *{total_going}*\n\n"
 
     # Идут
