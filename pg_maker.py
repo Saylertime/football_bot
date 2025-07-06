@@ -25,16 +25,16 @@ async def create_schema():
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS chats (
                 title VARCHAR,
-                chat_id VARCHAR NOT NULL
+                chat_id VARCHAR UNIQUE NOT NULL
             );
         
             CREATE TABLE IF NOT EXISTS players (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR NOT NULL,
-                username VARCHAR UNIQUE,
+                username VARCHAR UNIQUE,  
                 is_active BOOLEAN NOT NULL DEFAULT TRUE
             );
-            
+             
             CREATE TABLE IF NOT EXISTS games (
                 id SERIAL PRIMARY KEY,
                 played_at DATE NOT NULL
@@ -318,3 +318,12 @@ async def get_all_player_totals():
     async with db_connection() as conn:
         rows = await conn.fetch(sql)
         return rows
+
+async def all_chats():
+    async with db_connection() as conn:
+        sql = """
+        SELECT chat_id
+        from chats; 
+        """
+        rows = await conn.fetch(sql)
+        return [dict(row) for row in rows]

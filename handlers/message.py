@@ -8,11 +8,12 @@ from keyboards.reply.create_markup import create_markup
 from pg_maker import (
     add_player,
     all_players,
+    all_chats,
     get_latest_game,
     register_player_in_game,
     unregister_player_from_game,
     find_player_id,
-    find_players_in_game,
+    find_players_in_game
 )
 
 router_message = Router()
@@ -95,24 +96,21 @@ async def get_msg() -> str:
 @router_message.message(Command("message"))
 @router_message.callback_query(F.data == "message")
 async def message_func(event):
-    if isinstance(event, CallbackQuery):
-        user = event.from_user
-    else:
-        user = event.from_user
 
-    username = user.username or ''
-    # buttons = await get_buttons(username)
+
     buttons = await get_buttons()
     markup = create_markup(buttons, columns=2)
     msg = await get_msg()
-    for chat in CHATS:
+
+    chats_from_pg = await all_chats()
+
+    for chat in chats_from_pg:
         await bot.send_message(
-            chat_id=chat,
+            chat_id=chat["chat_id"],
             text=msg,
             reply_markup=markup,
             parse_mode="Markdown"
         )
-
 
 
 @router_message.callback_query(F.data.startswith(("yes__", "no__", "yes_plus__", "maybe__")))
