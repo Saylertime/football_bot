@@ -78,7 +78,7 @@ async def get_msg() -> str:
     if maybe_users:
         for idx, u in enumerate(maybe_users, 1):
             full_name = player_map.get(u, u)
-            msg += f"{idx}. {full_name} @{u if u else ''}\n"
+            msg += f"{idx}. {full_name}\n"
     else:
         msg += "\n"
     url = "https://maps.app.goo.gl/gthro3uEh1rHKPAu7?g\\_st=it"
