@@ -70,6 +70,7 @@ async def insert_player_func(callback):
     buttons = [
         (player["name"], f"add__{str(player['id'])}__{game_id}__{played_at}") for player in players_without_game
     ]
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Игроки, которых еще нет в этой игре:", reply_markup=markup)
 
