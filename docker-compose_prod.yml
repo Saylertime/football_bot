@@ -13,7 +13,7 @@ services:
     volumes:
       - ../football_bot:/telegram_bot
     environment:
-      - LOCAL_ENV=local
+      - LOCAL_ENV=prod
 
   postgres:
     image: postgres
