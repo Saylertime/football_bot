@@ -98,7 +98,8 @@ async def all_time_stats_func(callback):
             "📊 *Твоя статистика*\n\n\n"
             f"🥅 Сыграно матчей: {my_stats['matches_played']}\n"
             f"⚽ Забито голов: {my_stats['total_goals']}\n"
-            f"🤝 Сделано ассистов: {my_stats['total_assists']}"
+            f"🤝 Сделано ассистов: {my_stats['total_assists']}\n"
+            f"🤡 Забито в свою раму: {my_stats['total_autogoals']}"
         )
     markup = create_markup(buttons_back)
     await message.edit_text(msg, reply_markup=markup, parse_mode="Markdown")

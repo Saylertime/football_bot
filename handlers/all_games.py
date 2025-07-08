@@ -7,7 +7,9 @@ from states.overall import OverallState
 from utils.calend import MONTHS_GENITIVE
 from pg_maker import (all_games, find_players_without_game, find_players_in_game,
                       register_player_in_game, unregister_player_from_game,
-                      add_goal, add_assist, add_autogoal, results_of_the_game, delete_game)
+                      add_goal, add_assist, add_autogoal, results_of_the_game,
+                      delete_game, remove_goal, remove_assist, remove_autogoal,
+                      find_players_with_something)
 
 
 router_all_games = Router()
@@ -44,12 +46,15 @@ async def one_game(callback):
     game_id = callback.data.split("__")[1]
     played_at = callback.data.split("__")[2]
     buttons = [
-        ("🆕 Добавить игрока", f"insert_player__{game_id}__{played_at}"),
-        ("❌ Убрать игрока", f"remove_player__{game_id}__{played_at}"),
         ("⚽ Гол", f"add_goal__{game_id}__{played_at}"),
         ("🤝 Ассист", f"add_assist__{game_id}__{played_at}"),
         ("🤡 Автогол", f"add_autogoal__{game_id}__{played_at}"),
+        ("🚫⚽ Отменить гол", f"remove_goal__{game_id}__{played_at}"),
+        ("🚫🤝 Отменить ассист", f"remove_assist__{game_id}__{played_at}"),
+        ("🚫🤡 Отменить автогол", f"remove_autogoal__{game_id}__{played_at}"),
         ("📊 Статистика", f"results__{game_id}__{played_at}"),
+        ("🆕 Добавить игрока", f"insert_player__{game_id}__{played_at}"),
+        ("❌ Убрать игрока", f"remove_player__{game_id}__{played_at}"),
         ("🗑️ Удалить игру", f"game_delete__{game_id}__{played_at}"),
         ("↩️ Назад в меню", "start"),
     ]
@@ -112,6 +117,7 @@ async def add_goal_func(callback):
     buttons = [
         (player["name"], f"goal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Кто забил?", reply_markup=markup)
 
@@ -127,6 +133,29 @@ async def goal_func(callback):
     await callback.message.edit_text("Красиво делает!", reply_markup=markup)
 
 
+@router_all_games.callback_query(F.data.startswith("remove_goal__"))
+async def remove_goal_func(callback):
+    game_id = int(callback.data.split("__")[1])
+    played_at = callback.data.split("__")[2]
+    players_in_game = await find_players_with_something(int(game_id), something="goals")
+    buttons = [
+        (player["name"], f"ungoal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
+    ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Кого отменяем?", reply_markup=markup)
+
+@router_all_games.callback_query(F.data.startswith("ungoal__"))
+async def remove_goal_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    await remove_goal(game_id, player_id)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text("Галя, отмена", reply_markup=markup)
+
+
 @router_all_games.callback_query(F.data.startswith("add_assist__"))
 async def add_assist_func(callback):
     game_id = int(callback.data.split("__")[1])
@@ -135,6 +164,7 @@ async def add_assist_func(callback):
     buttons = [
         (player["name"], f"assist__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Кто сделал ассист?", reply_markup=markup)
 
@@ -150,6 +180,30 @@ async def assist_func(callback):
     await callback.message.edit_text("Красиво раздаёт пасы!", reply_markup=markup)
 
 
+@router_all_games.callback_query(F.data.startswith("remove_assist__"))
+async def remove_assist_func(callback):
+    game_id = int(callback.data.split("__")[1])
+    played_at = callback.data.split("__")[2]
+    players_in_game = await find_players_with_something(int(game_id), something="assists")
+    buttons = [
+        (player["name"], f"unassist__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
+    ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Кого отменяем?", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("unassist__"))
+async def remove_assist_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    await remove_assist(game_id, player_id)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text("Галя, отмена", reply_markup=markup)
+
+
 @router_all_games.callback_query(F.data.startswith("add_autogoal__"))
 async def add_autogoal_func(callback):
     game_id = int(callback.data.split("__")[1])
@@ -158,6 +212,7 @@ async def add_autogoal_func(callback):
     buttons = [
         (player["name"], f"autogoal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Кто забил в свои ворота?", reply_markup=markup)
 
@@ -172,6 +227,29 @@ async def autogoal_func(callback):
     markup = create_markup(buttons)
     await callback.message.edit_text("Подставил команду...", reply_markup=markup)
 
+
+@router_all_games.callback_query(F.data.startswith("remove_autogoal__"))
+async def remove_autogoal_func(callback):
+    game_id = int(callback.data.split("__")[1])
+    played_at = callback.data.split("__")[2]
+    players_in_game = await find_players_with_something(int(game_id), something="autogoals")
+    buttons = [
+        (player["name"], f"unautogoal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
+    ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Кого отменяем?", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("unautogoal__"))
+async def remove_autogoal_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    await remove_autogoal(game_id, player_id)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text("Галя, отмена", reply_markup=markup)
 
 
 @router_all_games.callback_query(F.data.startswith("results__"))

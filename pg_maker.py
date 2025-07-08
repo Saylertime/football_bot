@@ -202,6 +202,18 @@ async def add_goal(game_id, player_id, count=1):
         await conn.execute(sql, game_id, player_id, count)
 
 
+async def remove_goal(game_id, player_id, count=1):
+    async with db_connection() as conn:
+        sql = """
+        INSERT INTO game_player_stats (game_id, player_id, goals, assists)
+        VALUES ($1, $2, 0, 0)
+        ON CONFLICT (game_id, player_id) DO UPDATE
+          SET goals = GREATEST(game_player_stats.goals - $3, 0);
+        """
+        await conn.execute(sql, game_id, player_id, count)
+
+
+
 async def add_assist(game_id, player_id, count=1):
     async with db_connection() as conn:
         sql = """
@@ -209,6 +221,16 @@ async def add_assist(game_id, player_id, count=1):
         VALUES ($1, $2, 0, $3)
         ON CONFLICT (game_id, player_id) DO UPDATE
           SET assists = game_player_stats.assists + $3;
+        """
+        await conn.execute(sql, game_id, player_id, count)
+
+
+async def remove_assist(game_id, player_id, count=1):
+    async with db_connection() as conn:
+        sql = """
+        UPDATE game_player_stats
+        SET assists = GREATEST(assists - $3, 0)
+        WHERE game_id = $1 AND player_id = $2;
         """
         await conn.execute(sql, game_id, player_id, count)
 
@@ -222,6 +244,19 @@ async def add_autogoal(game_id, player_id, count=1):
           ($1, $2, 0, 0, $3)
         ON CONFLICT (game_id, player_id) DO UPDATE
           SET autogoals = game_player_stats.autogoals + $3;
+        """
+        await conn.execute(sql, game_id, player_id, count)
+
+
+async def remove_autogoal(game_id, player_id, count=1):
+    async with db_connection() as conn:
+        sql = """
+        INSERT INTO game_player_stats
+          (game_id, player_id, goals, assists, autogoals)
+        VALUES
+          ($1, $2, 0, 0, 0)
+        ON CONFLICT (game_id, player_id) DO UPDATE
+          SET autogoals = GREATEST(game_player_stats.autogoals - $3, 0);
         """
         await conn.execute(sql, game_id, player_id, count)
 
@@ -258,6 +293,22 @@ async def find_players_in_game(game_id):
         return [dict(row) for row in rows]
 
 
+async def find_players_with_something(game_id, something):
+    async with db_connection() as conn:
+        sql = f"""
+        SELECT
+          p.id,
+          p.name,
+          p.username
+        FROM players p
+        LEFT JOIN game_player_stats s
+          ON s.player_id = p.id
+        WHERE s.game_id = $1 AND s.{something} >= 1;
+        """
+        rows = await conn.fetch(sql, game_id)
+        return [dict(row) for row in rows]
+
+
 async def results_of_the_game(game_id):
     async with db_connection() as conn:
         rows = await conn.fetch(
@@ -281,15 +332,24 @@ async def results_of_the_game(game_id):
 
         msg = "Результаты сегодняшних игр: \n\n"
         for num, r in enumerate(rows):
-            name = r["name"]
-            username = f"@{r['username']}" or ""
             goals = r["goals"]
             assists = r["assists"]
             autogoals = r["autogoals"]
-            msg += (f"{num + 1}. {name} — {username}: \n"
-                    f"⚽ Голы: {goals}\n"
-                    f"🤝 Ассисты: {assists}\n"
-                    f"🤡 Автоголов: {autogoals}\n\n")
+
+            if not (goals or assists or autogoals):
+                continue
+
+            name = r["name"]
+            username = f"@{r['username']}" if r["username"] else ""
+
+            msg += f"{num + 1}. {name} — {username}:\n"
+            if goals:
+                msg += f"⚽ Голы: {goals}\n"
+            if assists:
+                msg += f"🤝 Ассисты: {assists}\n"
+            if autogoals:
+                msg += f"🤡 Автоголы: {autogoals}\n"
+            msg += "\n"
 
         return msg
 
@@ -312,7 +372,8 @@ async def my_general_stats(player_id):
         SELECT
           COUNT(*) AS matches_played,
           COALESCE(SUM(goals), 0) AS total_goals,
-          COALESCE(SUM(assists), 0) AS total_assists
+          COALESCE(SUM(assists), 0) AS total_assists,
+          COALESCE(SUM(autogoals), 0) AS total_autogoals
         FROM game_player_stats
         WHERE player_id = $1
         """
