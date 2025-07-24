@@ -42,6 +42,7 @@ async def command_start_handler(message):
         # ("📊 Моя статистика", "my_stats"),
         # ("🌐 Общая стата за всё время", "general_stats"),
         ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
+        ("💬 ДЕНЬГИ", "money"),
     ]
 
     if current_game:

@@ -8,3 +8,4 @@ class OverallState(StatesGroup):
     new_player = State()
     add_game = State()
     change_name = State()
+    money = State()

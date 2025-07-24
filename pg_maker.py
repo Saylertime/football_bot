@@ -48,7 +48,18 @@ async def create_schema():
                 autogoals   INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (game_id, player_id)
             );
+            
+            CREATE TABLE IF NOT EXISTS game_payments (
+                game_id   INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+                player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE RESTRICT,
+                PRIMARY KEY (game_id, player_id)
+            );
+            CREATE TABLE IF NOT EXISTS game_sums (
+                game_id INTEGER PRIMARY KEY REFERENCES games(id) ON DELETE CASCADE,
+                summa INTEGER NOT NULL
+            );
         """)
+
 
 async def add_chat(title, chat_id):
     async with db_connection() as conn:
@@ -417,3 +428,57 @@ async def change_players_name(name, player_id):
         WHERE id = $2;
         """
         await conn.execute(sql, name, player_id)
+
+
+async def mark_player_paid(game_id, player_id):
+    async with db_connection() as conn:
+        await conn.execute("""
+            INSERT INTO game_payments (game_id, player_id)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+        """, game_id, player_id)
+
+
+async def add_summa(game_id, summa):
+    async with db_connection() as conn:
+        await conn.execute("""
+            UPDATE game_payments
+            SET summa = $2
+            WHERE game_id = $1
+        """, game_id, summa)
+
+
+async def get_paid_players(game_id):
+    async with db_connection() as conn:
+        rows = await conn.fetch("""
+            SELECT players.username FROM game_payments
+            JOIN players ON players.id = game_payments.player_id
+            WHERE game_payments.game_id = $1
+        """, game_id)
+        return [r["username"] for r in rows]
+
+
+async def remove_payment(game_id, player_id):
+    async with db_connection() as conn:
+        await conn.execute("""
+            DELETE FROM game_payments
+            WHERE game_id = $1 AND player_id = $2
+        """, game_id, player_id)
+
+async def add_summa(game_id, summa):
+    async with db_connection() as conn:
+        await conn.execute("""
+            INSERT INTO game_sums (game_id, summa)
+            VALUES ($1, $2)
+            ON CONFLICT (game_id) DO UPDATE SET summa = EXCLUDED.summa
+        """, game_id, summa)
+
+async def find_summa(game_id):
+    async with db_connection() as conn:
+        row = await conn.fetchrow("""
+            SELECT summa FROM game_sums
+            WHERE game_id = $1
+        """, game_id)
+        return row["summa"] if row else 0
+
+
