@@ -27,6 +27,7 @@ async def general_stats_func(message):
         msg += (f"* {num}. {player['name']} *  — @{player['username']}\n"
                 f"⚽ Голы: {player['total_goals']}\n"
                 f"🤝 Ассисты: {player['total_assists']}\n"
+                f"🤡 Автоголы: {player['total_autogoals']}\n"
                 f"______________ \n")
 
     buttons_back = [

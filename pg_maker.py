@@ -399,7 +399,8 @@ async def get_all_player_totals():
       p.name,
       p.username,
       COALESCE(SUM(s.goals),   0) AS total_goals,
-      COALESCE(SUM(s.assists), 0) AS total_assists
+      COALESCE(SUM(s.assists), 0) AS total_assists,
+      COALESCE(SUM(autogoals), 0) AS total_autogoals
     FROM players p
     LEFT JOIN game_player_stats s
       ON p.id = s.player_id
