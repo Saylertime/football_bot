@@ -49,7 +49,7 @@ async def get_msg_money():
     unpaid_players = [p for p in going_players if p["username"] not in maybe_users]
 
 
-    msg = f"Скидываемся по <b>{summa}</b> рублей с человека\n\n"
+    msg = f"Скидываемся по <b>{summa}</b> HUF с человека\n\n"
 
     if maybe_users:
         msg += "\n<b>Уже сдали:</b>\n"
