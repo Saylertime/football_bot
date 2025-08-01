@@ -26,9 +26,11 @@ async def general_stats_func(message):
     for num, player in enumerate(results, 1):
         msg += (f"* {num}. {player['name']} *  — @{player['username']}\n"
                 f"⚽ Голы: {player['total_goals']}\n"
-                f"🤝 Ассисты: {player['total_assists']}\n"
-                f"🤡 Автоголы: {player['total_autogoals']}\n"
-                f"______________ \n")
+                f"🤝 Ассисты: {player['total_assists']}\n")
+
+        if player['total_autogoals'] > 0:
+            msg += f"🤡 Автоголы: {player['total_autogoals']}\n"
+        msg += "______________ \n"
 
     buttons_back = [
         ("↩️ Назад в меню", "start"),
