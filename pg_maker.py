@@ -392,24 +392,68 @@ async def my_general_stats(player_id):
         return row
 
 
-async def get_all_player_totals():
+async def get_all_player_totals_goals_and_assists():
     sql = """
-    SELECT
-      p.id,
-      p.name,
-      p.username,
-      COALESCE(SUM(s.goals),   0) AS total_goals,
-      COALESCE(SUM(s.assists), 0) AS total_assists,
-      COALESCE(SUM(autogoals), 0) AS total_autogoals
-    FROM players p
-    LEFT JOIN game_player_stats s
-      ON p.id = s.player_id
-    GROUP BY p.id, p.name, p.username
-    ORDER BY total_goals DESC, total_assists DESC;
+        SELECT
+          p.id,
+          p.name,
+          p.username,
+          COALESCE(SUM(s.goals),   0) AS total_goals,
+          COALESCE(SUM(s.assists), 0) AS total_assists,
+          COALESCE(SUM(autogoals), 0) AS total_autogoals,
+          COALESCE(SUM(s.goals), 0) + COALESCE(SUM(s.assists), 0) AS total_points
+        FROM players p
+        LEFT JOIN game_player_stats s
+          ON p.id = s.player_id
+        GROUP BY 
+          p.id, p.name, p.username
+        ORDER BY 
+          total_points DESC,
+          total_goals DESC;
     """
     async with db_connection() as conn:
         rows = await conn.fetch(sql)
         return rows
+
+
+async def get_all_player_totals_goals():
+    sql = """
+        SELECT
+          p.id,
+          p.name,
+          p.username,
+          COALESCE(SUM(s.goals),   0) AS total_goals,
+          COALESCE(SUM(s.assists), 0) AS total_assists,
+          COALESCE(SUM(autogoals), 0) AS total_autogoals
+        FROM players p
+        LEFT JOIN game_player_stats s
+          ON p.id = s.player_id
+        GROUP BY p.id, p.name, p.username
+        ORDER BY total_goals DESC, total_assists DESC;
+    """
+    async with db_connection() as conn:
+        rows = await conn.fetch(sql)
+        return rows
+
+async def get_all_player_totals_assists():
+    sql = """
+        SELECT
+          p.id,
+          p.name,
+          p.username,
+          COALESCE(SUM(s.goals),   0) AS total_goals,
+          COALESCE(SUM(s.assists), 0) AS total_assists,
+          COALESCE(SUM(autogoals), 0) AS total_autogoals
+        FROM players p
+        LEFT JOIN game_player_stats s
+          ON p.id = s.player_id
+        GROUP BY p.id, p.name, p.username
+        ORDER BY total_assists DESC, total_goals DESC;
+    """
+    async with db_connection() as conn:
+        rows = await conn.fetch(sql)
+        return rows
+
 
 async def all_chats():
     async with db_connection() as conn:

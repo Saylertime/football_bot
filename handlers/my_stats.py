@@ -28,7 +28,9 @@ async def stats_func(message):
 
     buttons = [
         ("📊 Моя статистика", "my_stats"),
-        ("🌐 Общая стата за всё время", "general_stats"),
+        ("⚽️ Общая стата ГОЛ", "general_stats_goal"),
+        ("🤝 Общая стата ПАС", "general_stats_assist"),
+        ("⚽+🤝 Общая стата ГОЛ+ПАС", "general_stats_goal_and_assist"),
     ]
     markup = create_markup(buttons)
     await message.edit_text("Что смотрим?", reply_markup=markup)
