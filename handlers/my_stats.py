@@ -13,7 +13,8 @@ from pg_maker import (
     results_of_the_game, find_player_id,
     my_stats_in_match, my_general_stats,
     get_all_player_totals_goals, get_all_player_totals_assists,
-    get_all_player_totals_goals_and_assists
+    get_all_player_totals_goals_and_assists,
+    get_top_players_by_points
 )
 
 
@@ -35,9 +36,11 @@ async def stats_func(message):
         ("📊 Моя статистика", "my_stats"),
         ("⚽️ Общая стата ГОЛ", "general_stats_goal"),
         ("🤝 Общая стата ПАС", "general_stats_assist"),
+        ("🏆 Общая стата ОЧКИ", "general_stats_points"),
         ("⚽+🤝 Общая стата ГОЛ+ПАС", "general_stats_goal_and_assist"),
         ("📅 ⚽️ ГОЛЫ за период ", "see_goals_period"),
         ("📅 🤝 АССИСТЫ за период ", "see_assists_period"),
+        ("📅 🏆 ОЧКИ за период", "see_points_period"),
         ("📅 ⚽+🤝 ГОЛ+АССИСТ за период ", "see_goals_and_assists_period"),
     ]
     markup = create_markup(buttons)

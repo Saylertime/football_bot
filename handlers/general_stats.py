@@ -11,6 +11,7 @@ from pg_maker import (
     get_all_player_totals_goals,
     get_all_player_totals_assists,
     get_all_player_totals_goals_and_assists,
+    get_top_players_by_points
 )
 
 router_general_stats = Router()
@@ -35,10 +36,10 @@ async def general_stats_func(event, state: FSMContext):
             ("⚽ Голы (всё время)", "general_stats_goal"),
             ("🤝 Ассисты (всё время)", "general_stats_assist"),
             ("⚽+🤝 Гол+пас (всё время)", "general_stats_goal_and_assist"),
-            # Если хотите, можно и отсюда запускать «период»:
             ("📅 ⚽ Голы за период", "general_stats_goal_period"),
             ("📅 🤝 Ассисты за период", "general_stats_assist_period"),
             ("📅 ⚽+🤝 Гол+пас за период", "general_stats_goal_and_assist_period"),
+            ("📅 🏆 Очки за период", "general_stats_points_period"),
             ("↩️ Назад в меню", "start"),
         ], columns=2)
         await message.answer("Выбери раздел статистики:", reply_markup=kb)
@@ -67,6 +68,9 @@ async def general_stats_func(event, state: FSMContext):
     elif data == "general_stats_goal_and_assist":
         results = await get_all_player_totals_goals_and_assists()
         header = "<b>ТАБЛИЦА ЛУЧШИХ ПО ГОЛ+ПАС</b>\n\n"
+    elif data == "general_stats_points":
+        results = await get_top_players_by_points()
+        header = "<b>ТАБЛИЦА ЛУЧШИХ ПО ОЧКАМ</b>\n\n"
     else:
         kb = create_markup([("↩️ Назад в меню", "start")])
         await message.answer("Неизвестный тип статистики.", reply_markup=kb)
@@ -101,12 +105,14 @@ def build_stats_message(results, header: str):
     return msg, markup
 
 
-@router_general_stats.callback_query(F.data.in_({"see_goals_period", "see_assists_period", "see_goals_and_assists_period"}))
+@router_general_stats.callback_query(F.data.in_({"see_goals_period", "see_assists_period",
+                                                 "see_goals_and_assists_period", "see_points_period"}))
 async def start_period_from_stats_menu(call: CallbackQuery, state: FSMContext):
     mapping = {
         "see_goals_period": "general_stats_goal",
         "see_assists_period": "general_stats_assist",
         "see_goals_and_assists_period": "general_stats_goal_and_assist",
+        "see_points_period": "general_stats_points",
     }
     stats_type = mapping[call.data]
     await state.set_state(OverallState.calendar)
@@ -160,6 +166,10 @@ async def process_dialog_calendar(callback_query: CallbackQuery, callback_data, 
         elif stats_type == "general_stats_assist":
             results = await get_all_player_totals_assists(start_date, end_date)
             header = (f"<b>ТАБЛИЦА ЛУЧШИХ ПО АССИСТАМ</b>\n"
+                      f"📅 с {start_date.strftime('%d %B')} по {end_date.strftime('%d %B')}\n\n")
+        elif stats_type == "general_stats_points":
+            results = await get_top_players_by_points(start_date, end_date)
+            header = (f"<b>ТАБЛИЦА ЛУЧШИХ ПО ОЧКАМ</b>\n"
                       f"📅 с {start_date.strftime('%d %B')} по {end_date.strftime('%d %B')}\n\n")
         else:
             results = await get_all_player_totals_goals_and_assists(start_date, end_date)

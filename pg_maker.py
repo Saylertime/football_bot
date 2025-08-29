@@ -343,7 +343,8 @@ async def results_of_the_game(game_id):
               p.username,
               s.goals,
               s.assists,
-              s.autogoals
+              s.autogoals,
+              s.points
             FROM game_player_stats s
             JOIN players p ON p.id = s.player_id
             WHERE s.game_id = $1
@@ -351,12 +352,42 @@ async def results_of_the_game(game_id):
             """,
             game_id
         )
-        if not rows:
-            message = "ℹ️ Для этой игры ещё нет статистики"
-            return message
 
-        msg = "Результаты сегодняшних игр: \n\n"
-        for num, r in enumerate(rows):
+        if not rows:
+            return "ℹ️ Для этой игры ещё нет статистики"
+
+        def fmt_user(r):
+            uname = f"@{r['username']}" if r["username"] else "—"
+            return f"{r['name']} ({uname})"
+
+        winners = [r for r in rows if r["points"] == 3]
+        seconds = [r for r in rows if r["points"] == 1]
+        losers  = [r for r in rows if r["points"] == 0]
+
+        msg_parts = ["Результаты сегодняшних игр:\n"]
+
+        if winners:
+            msg_parts.append("🏆 Победители (+3 очка):")
+            for r in winners:
+                msg_parts.append(f"• {fmt_user(r)}")
+            msg_parts.append("")
+
+        if seconds:
+            msg_parts.append("🥈 Второе место (+1 очко):")
+            for r in seconds:
+                msg_parts.append(f"• {fmt_user(r)}")
+            msg_parts.append("")
+
+        if losers:
+            msg_parts.append("❌ Третье место:")
+            for r in losers:
+                msg_parts.append(f"• {fmt_user(r)}")
+            msg_parts.append("")
+
+        msg_parts.append("—" * 22)
+
+        num = 1
+        for r in rows:
             goals = r["goals"]
             assists = r["assists"]
             autogoals = r["autogoals"]
@@ -367,16 +398,17 @@ async def results_of_the_game(game_id):
             name = r["name"]
             username = f"@{r['username']}" if r["username"] else ""
 
-            msg += f"{num + 1}. {name} — {username}:\n"
+            msg_parts.append(f"{num}. {name} — {username}:")
             if goals:
-                msg += f"⚽ Голы: {goals}\n"
+                msg_parts.append(f"   ⚽ Голы: {goals}")
             if assists:
-                msg += f"🤝 Ассисты: {assists}\n"
+                msg_parts.append(f"   🤝 Ассисты: {assists}")
             if autogoals:
-                msg += f"🤡 Автоголы: {autogoals}\n"
-            msg += "\n"
+                msg_parts.append(f"   🤡 Автоголы: {autogoals}")
+            msg_parts.append("")
+            num += 1
 
-        return msg
+        return "\n".join(msg_parts)
 
 
 async def get_latest_game():
@@ -537,6 +569,48 @@ async def get_all_player_totals_assists(start_date=None, end_date=None):
         LEFT JOIN games g ON g.id = s.game_id
         GROUP BY p.id, p.name, p.username
         ORDER BY total_assists DESC, total_goals DESC;
+    """
+    async with db_connection() as conn:
+        return await conn.fetch(sql, start_date, end_date)
+
+
+async def get_top_players_by_points(start_date=None, end_date=None):
+    sql = """
+        SELECT
+          p.id,
+          p.name,
+          p.username,
+
+          COALESCE(SUM(CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                  OR g.played_at BETWEEN $1 AND $2
+              THEN s.goals ELSE 0 END), 0) AS total_goals,
+
+          COALESCE(SUM(CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                  OR g.played_at BETWEEN $1 AND $2
+              THEN s.assists ELSE 0 END), 0) AS total_assists,
+
+          COALESCE(SUM(CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                  OR g.played_at BETWEEN $1 AND $2
+              THEN s.autogoals ELSE 0 END), 0) AS total_autogoals,
+
+          COALESCE(SUM(CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                  OR g.played_at BETWEEN $1 AND $2
+              THEN s.points ELSE 0 END), 0) AS total_points,
+
+          COALESCE(COUNT(DISTINCT CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                  OR g.played_at BETWEEN $1 AND $2
+              THEN g.id END), 0) AS games_played
+
+        FROM players p
+        LEFT JOIN game_player_stats s ON s.player_id = p.id
+        LEFT JOIN games g ON g.id = s.game_id
+        GROUP BY p.id, p.name, p.username
+        ORDER BY total_points DESC, total_goals DESC
     """
     async with db_connection() as conn:
         return await conn.fetch(sql, start_date, end_date)
