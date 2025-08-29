@@ -82,6 +82,10 @@ async def general_stats_func(event, state: FSMContext):
 def build_stats_message(results, header: str):
     msg = header
     for num, player in enumerate(results, 1):
+
+        if player['games_played'] == 0:
+            continue
+
         username = f"@{player['username']}" if player['username'] else "—"
         msg += (f"<b>{num}. {player['name']}</b> — {username}\n"
                 f"⚽ Голы: {player['total_goals']}\n"

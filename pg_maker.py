@@ -444,7 +444,7 @@ async def get_all_player_totals_goals_and_assists(start_date=None, end_date=None
         LEFT JOIN game_player_stats s ON s.player_id = p.id
         LEFT JOIN games g ON g.id = s.game_id
         GROUP BY p.id, p.name, p.username
-        ORDER BY total_points DESC, total_goals DESC;
+        ORDER BY (total_goals + total_assists) DESC, total_goals DESC, total_points DESC
     """
     async with db_connection() as conn:
         return await conn.fetch(sql, start_date, end_date)
