@@ -428,23 +428,27 @@ async def get_all_player_totals_goals_and_assists(start_date=None, end_date=None
                    OR g.played_at BETWEEN $1 AND $2
               THEN s.autogoals ELSE 0 END), 0) AS total_autogoals,
 
-          -- очки из колонки points
           COALESCE(SUM(CASE
               WHEN $1::date IS NULL OR $2::date IS NULL
                    OR g.played_at BETWEEN $1 AND $2
               THEN s.points ELSE 0 END), 0) AS total_points,
 
-          -- количество матчей
           COALESCE(COUNT(DISTINCT CASE
               WHEN $1::date IS NULL OR $2::date IS NULL
                    OR g.played_at BETWEEN $1 AND $2
-              THEN g.id END), 0) AS games_played
+              THEN g.id END), 0) AS games_played,
+
+          -- Гол + ассист для сортировки
+          COALESCE(SUM(CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                   OR g.played_at BETWEEN $1 AND $2
+              THEN s.goals + s.assists ELSE 0 END), 0) AS total_ga
 
         FROM players p
         LEFT JOIN game_player_stats s ON s.player_id = p.id
         LEFT JOIN games g ON g.id = s.game_id
         GROUP BY p.id, p.name, p.username
-        ORDER BY (total_goals + total_assists) DESC, total_goals DESC, total_points DESC
+        ORDER BY total_ga DESC, total_goals DESC, total_points DESC;
     """
     async with db_connection() as conn:
         return await conn.fetch(sql, start_date, end_date)
