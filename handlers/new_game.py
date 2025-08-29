@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram_calendar import DialogCalendar, DialogCalendarCallback
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
 from aiogram.types import CallbackQuery
 
 from datetime import datetime, timedelta
@@ -27,7 +27,7 @@ async def add_game_func(message, state):
     )
 
 
-@router_add_game.callback_query(DialogCalendarCallback.filter())
+@router_add_game.callback_query(StateFilter(OverallState.add_game), DialogCalendarCallback.filter())
 async def process_dialog_calendar(callback_query, callback_data, state):
     selected, date = await DialogCalendar().process_selection(
         callback_query, callback_data

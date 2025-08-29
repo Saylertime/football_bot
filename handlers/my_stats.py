@@ -1,14 +1,19 @@
 from aiogram import Router, F
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
 from aiogram.types import CallbackQuery
+from aiogram_calendar import DialogCalendar, DialogCalendarCallback
+from datetime import datetime, timedelta
 
 from keyboards.reply.create_markup import create_markup
 from states.overall import OverallState
 from utils.calend import MONTHS_GENITIVE
+
 from pg_maker import (
     all_my_games, all_games,
     results_of_the_game, find_player_id,
-    my_stats_in_match, my_general_stats
+    my_stats_in_match, my_general_stats,
+    get_all_player_totals_goals, get_all_player_totals_assists,
+    get_all_player_totals_goals_and_assists
 )
 
 
@@ -31,6 +36,9 @@ async def stats_func(message):
         ("⚽️ Общая стата ГОЛ", "general_stats_goal"),
         ("🤝 Общая стата ПАС", "general_stats_assist"),
         ("⚽+🤝 Общая стата ГОЛ+ПАС", "general_stats_goal_and_assist"),
+        ("📅 ⚽️ ГОЛЫ за период ", "see_goals_period"),
+        ("📅 🤝 АССИСТЫ за период ", "see_assists_period"),
+        ("📅 ⚽+🤝 ГОЛ+АССИСТ за период ", "see_goals_and_assists_period"),
     ]
     markup = create_markup(buttons)
     await message.edit_text("Что смотрим?", reply_markup=markup)
@@ -105,4 +113,3 @@ async def all_time_stats_func(callback):
         )
     markup = create_markup(buttons_back)
     await message.edit_text(msg, reply_markup=markup, parse_mode="Markdown")
-

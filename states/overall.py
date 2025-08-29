@@ -9,3 +9,4 @@ class OverallState(StatesGroup):
     add_game = State()
     change_name = State()
     money = State()
+    calendar = State()

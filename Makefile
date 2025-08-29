@@ -17,11 +17,8 @@ build:
 down:
 	docker-compose -f $(COMPOSE_FILE) down
 
-report:
-	docker exec -it report /bin/sh -c "cat bot.log"
-
-guru:
-	docker exec -it guide_guru /bin/sh -c "cat bot.log"
+bot:
+	 docker compose -f $(COMPOSE_FILE) exec football_bot bash
 
 pg_bash:
 	docker exec -it football_postgres /bin/sh -c "psql -h postgres -U sayler -d postgres"
