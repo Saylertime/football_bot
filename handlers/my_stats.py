@@ -42,6 +42,7 @@ async def stats_func(message):
         ("📅 🤝 АССИСТЫ за период ", "see_assists_period"),
         ("📅 🏆 ОЧКИ за период", "see_points_period"),
         ("📅 ⚽+🤝 ГОЛ+АССИСТ за период ", "see_goals_and_assists_period"),
+        ("↩️ Назад в меню", "start"),
     ]
     markup = create_markup(buttons)
     await message.edit_text("Что смотрим?", reply_markup=markup)

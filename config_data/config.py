@@ -26,4 +26,5 @@ CHATS = os.getenv("CHATS").split(",")
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
     ("new_chat", "Добавить бота в чат"),
+    ("general_stats", "Статистика"),
 )
