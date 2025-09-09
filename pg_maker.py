@@ -353,62 +353,69 @@ async def results_of_the_game(game_id):
             game_id
         )
 
-        if not rows:
-            return "ℹ️ Для этой игры ещё нет статистики"
+    if not rows:
+        return "ℹ️ Для этой игры ещё нет статистики"
 
-        def fmt_user(r):
-            uname = f"@{r['username']}" if r["username"] else "—"
-            return f"{r['name']} ({uname})"
+    def fmt_user(r):
+        uname = f"@{r['username']}" if r["username"] else "—"
+        return f"{r['name']} ({uname})"
 
-        winners = [r for r in rows if r["points"] == 3]
-        seconds = [r for r in rows if r["points"] == 1]
-        losers  = [r for r in rows if r["points"] == 0]
+    def ru_points(n: int) -> str:
+        n = abs(int(n))
+        if 11 <= n % 100 <= 14:
+            return "очков"
+        tail = n % 10
+        if tail == 1:
+            return "очко"
+        if 2 <= tail <= 4:
+            return "очка"
+        return "очков"
 
-        msg_parts = ["Результаты сегодняшних игр:\n"]
+    # топ-3 уникальных значения points (по убыванию)
+    unique_points = sorted({int(r["points"]) for r in rows}, reverse=True)
+    top3 = unique_points[:3]
 
-        if winners:
-            msg_parts.append("🏆 Победители (+3 очка):")
-            for r in winners:
-                msg_parts.append(f"• {fmt_user(r)}")
-            msg_parts.append("")
+    groups = []
+    titles = ["🏆 Победители", "🥈 Второе место", "🥉 Третье место"]
+    for idx, pts in enumerate(top3):
+        members = [r for r in rows if int(r["points"]) == pts]
+        if not members:
+            continue
+        title = f"{titles[idx]} (+{pts} {ru_points(pts)}):"
+        groups.append((title, members))
 
-        if seconds:
-            msg_parts.append("🥈 Второе место (+1 очко):")
-            for r in seconds:
-                msg_parts.append(f"• {fmt_user(r)}")
-            msg_parts.append("")
+    msg_parts = ["Результаты сегодняшних игр:\n"]
 
-        if losers:
-            msg_parts.append("❌ Третье место:")
-            for r in losers:
-                msg_parts.append(f"• {fmt_user(r)}")
-            msg_parts.append("")
+    for title, members in groups:
+        msg_parts.append(title)
+        for r in members:
+            msg_parts.append(f"• {fmt_user(r)}")
+        msg_parts.append("")
 
-        msg_parts.append("—" * 22)
+    msg_parts.append("—" * 22)
 
-        num = 1
-        for r in rows:
-            goals = r["goals"]
-            assists = r["assists"]
-            autogoals = r["autogoals"]
+    # Индивидуальная статистика
+    num = 1
+    for r in rows:
+        goals = r["goals"]
+        assists = r["assists"]
+        autogoals = r["autogoals"]
+        if not (goals or assists or autogoals):
+            continue
 
-            if not (goals or assists or autogoals):
-                continue
+        name = r["name"]
+        username = f"@{r['username']}" if r["username"] else ""
+        msg_parts.append(f"{num}. {name} — {username}:")
+        if goals:
+            msg_parts.append(f"   ⚽ Голы: {goals}")
+        if assists:
+            msg_parts.append(f"   🤝 Ассисты: {assists}")
+        if autogoals:
+            msg_parts.append(f"   🤡 Автоголы: {autogoals}")
+        msg_parts.append("")
+        num += 1
 
-            name = r["name"]
-            username = f"@{r['username']}" if r["username"] else ""
-
-            msg_parts.append(f"{num}. {name} — {username}:")
-            if goals:
-                msg_parts.append(f"   ⚽ Голы: {goals}")
-            if assists:
-                msg_parts.append(f"   🤝 Ассисты: {assists}")
-            if autogoals:
-                msg_parts.append(f"   🤡 Автоголы: {autogoals}")
-            msg_parts.append("")
-            num += 1
-
-        return "\n".join(msg_parts)
+    return "\n".join(msg_parts)
 
 
 async def get_latest_game():

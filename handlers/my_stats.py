@@ -9,8 +9,7 @@ from states.overall import OverallState
 from utils.calend import MONTHS_GENITIVE
 
 from pg_maker import (
-    all_my_games, all_games,
-    results_of_the_game, find_player_id,
+    all_my_games, all_games, find_player_id,
     my_stats_in_match, my_general_stats,
     get_all_player_totals_goals, get_all_player_totals_assists,
     get_all_player_totals_goals_and_assists,

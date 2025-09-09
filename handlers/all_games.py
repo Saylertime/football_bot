@@ -57,6 +57,7 @@ async def one_game(callback):
         ("❌ Убрать игрока", f"remove_player__{game_id}__{played_at}"),
         ("3️⃣ +3 очка игроку", f"point_player__{game_id}__{played_at}__3"),
         ("1️⃣ +1 очко игроку", f"point_player__{game_id}__{played_at}__1"),
+        ("🔢 Куча очков", f"more_points_player__{game_id}__{played_at}"),
         ("🗑️ Удалить игру", f"game_delete__{game_id}__{played_at}"),
         ("↩️ Назад в меню", "start"),
     ]
@@ -291,6 +292,30 @@ async def point_player_func(callback):
     await callback.message.edit_text("Кто выиграл?", reply_markup=markup)
 
 
+@router_all_games.callback_query(F.data.startswith("more_points_player__"))
+async def more_points_player_func(callback):
+    game_id = int(callback.data.split("__")[1])
+    played_at = callback.data.split("__")[2]
+    players_in_game = await find_players_in_game(int(game_id))
+    buttons = [
+        (player["name"], f"added_points__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
+    ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Кто выиграл?", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("added_points__"))
+async def added_points(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+
+    buttons = [(str(points), f"add_points__{str(player_id)}__{game_id}__{played_at}__{str(points)}") for points in range(21)]
+    markup = create_markup(buttons, 4)
+    await callback.message.edit_text(f"Сколько очков добавляем?", reply_markup=markup)
+
+
 @router_all_games.callback_query(F.data.startswith("add_points__"))
 async def add_point_player(callback):
     player_id = int(callback.data.split("__")[1])
@@ -301,6 +326,11 @@ async def add_point_player(callback):
     buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons)
     await callback.message.edit_text(f"Добавили {points} {'очка' if points==3 else 'очко'}", reply_markup=markup)
+
+
+# @router_all_games.callback_query(F.data.startswith("add_points__"))
+# async def add_point_player(callback):
+
 
 
 @router_all_games.callback_query(F.data.startswith("yes_delete__"))
