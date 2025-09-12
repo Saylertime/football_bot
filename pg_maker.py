@@ -214,15 +214,14 @@ async def add_goal(game_id, player_id, count=1):
         await conn.execute(sql, game_id, player_id, count)
 
 
-async def remove_goal(game_id, player_id, count=1):
+async def remove_goal(game_id, player_id):
     async with db_connection() as conn:
         sql = """
-        INSERT INTO game_player_stats (game_id, player_id, goals, assists)
-        VALUES ($1, $2, 0, 0)
-        ON CONFLICT (game_id, player_id) DO UPDATE
-          SET goals = GREATEST(game_player_stats.goals - $3, 0);
+        UPDATE game_player_stats
+        SET goals = 0
+        WHERE game_id = $1 AND player_id = $2;
         """
-        await conn.execute(sql, game_id, player_id, count)
+        await conn.execute(sql, game_id, player_id)
 
 
 
@@ -237,14 +236,14 @@ async def add_assist(game_id, player_id, count=1):
         await conn.execute(sql, game_id, player_id, count)
 
 
-async def remove_assist(game_id, player_id, count=1):
+async def remove_assist(game_id, player_id):
     async with db_connection() as conn:
         sql = """
         UPDATE game_player_stats
-        SET assists = GREATEST(assists - $3, 0)
+        SET assists = 0
         WHERE game_id = $1 AND player_id = $2;
         """
-        await conn.execute(sql, game_id, player_id, count)
+        await conn.execute(sql, game_id, player_id)
 
 
 async def add_autogoal(game_id, player_id, count=1):
