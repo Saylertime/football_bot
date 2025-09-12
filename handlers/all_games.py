@@ -126,12 +126,26 @@ async def add_goal_func(callback):
     await callback.message.edit_text("Кто забил?", reply_markup=markup)
 
 
+#################
+
 @router_all_games.callback_query(F.data.startswith("goal__"))
 async def goal_func(callback):
     player_id = int(callback.data.split("__")[1])
     game_id = int(callback.data.split("__")[2])
     played_at = callback.data.split("__")[3]
-    await add_goal(game_id, player_id)
+    buttons = [(str(points), f"add_few_goals__{str(player_id)}__{game_id}__{played_at}__{str(points)}") for points in
+               range(21)]
+    markup = create_markup(buttons, 4)
+    await callback.message.edit_text("Сколько наклепал за игру?", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("add_few_goals__"))
+async def few_goals_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    points = int(callback.data.split("__")[4])
+    await add_goal(game_id, player_id, points)
     buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons)
     await callback.message.edit_text("Красиво делает!", reply_markup=markup)
@@ -178,7 +192,19 @@ async def assist_func(callback):
     player_id = int(callback.data.split("__")[1])
     game_id = int(callback.data.split("__")[2])
     played_at = callback.data.split("__")[3]
-    await add_assist(game_id, player_id)
+    buttons = [(str(points), f"add_few_assists__{str(player_id)}__{game_id}__{played_at}__{str(points)}") for points in
+               range(21)]
+    markup = create_markup(buttons, 4)
+    await callback.message.edit_text("Сколько раздал пасов?", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("add_few_assists__"))
+async def few_assist_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    points = int(callback.data.split("__")[4])
+    await add_assist(game_id, player_id, points)
     buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons)
     await callback.message.edit_text("Красиво раздаёт пасы!", reply_markup=markup)
@@ -326,11 +352,6 @@ async def add_point_player(callback):
     buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons)
     await callback.message.edit_text(f"Добавили {points} {'очка' if points==3 else 'очко'}", reply_markup=markup)
-
-
-# @router_all_games.callback_query(F.data.startswith("add_points__"))
-# async def add_point_player(callback):
-
 
 
 @router_all_games.callback_query(F.data.startswith("yes_delete__"))
