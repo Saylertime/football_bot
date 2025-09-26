@@ -36,10 +36,12 @@ async def stats_func(message):
         ("⚽️ Общая стата ГОЛ", "general_stats_goal"),
         ("🤝 Общая стата ПАС", "general_stats_assist"),
         ("🏆 Общая стата ОЧКИ", "general_stats_points"),
+        ("💎 Общая стата PTS", "general_stats_overall_pts"),
         ("⚽+🤝 Общая стата ГОЛ+ПАС", "general_stats_goal_and_assist"),
         ("📅 ⚽️ ГОЛЫ за период ", "see_goals_period"),
         ("📅 🤝 АССИСТЫ за период ", "see_assists_period"),
         ("📅 🏆 ОЧКИ за период", "see_points_period"),
+        ("📅 💎 PTS за период", "see_overall_pts_period"),
         ("📅 ⚽+🤝 ГОЛ+АССИСТ за период ", "see_goals_and_assists_period"),
         ("↩️ Назад в меню", "start"),
     ]

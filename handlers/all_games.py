@@ -9,7 +9,7 @@ from pg_maker import (all_games, find_players_without_game, find_players_in_game
                       register_player_in_game, unregister_player_from_game,
                       add_goal, add_assist, add_autogoal, results_of_the_game,
                       delete_game, remove_goal, remove_assist, remove_autogoal,
-                      find_players_with_something, add_points)
+                      find_players_with_something, add_points, add_overall_pts)
 
 
 router_all_games = Router()
@@ -57,7 +57,7 @@ async def one_game(callback):
         ("❌ Убрать игрока", f"remove_player__{game_id}__{played_at}"),
         ("3️⃣ +3 очка игроку", f"point_player__{game_id}__{played_at}__3"),
         ("1️⃣ +1 очко игроку", f"point_player__{game_id}__{played_at}__1"),
-        ("🔢 Куча очков", f"more_points_player__{game_id}__{played_at}"),
+        ("🔢 + PTS", f"more_points_player__{game_id}__{played_at}"),
         ("🗑️ Удалить игру", f"game_delete__{game_id}__{played_at}"),
         ("↩️ Назад в меню", "start"),
     ]
@@ -337,7 +337,7 @@ async def added_points(callback):
     game_id = int(callback.data.split("__")[2])
     played_at = callback.data.split("__")[3]
 
-    buttons = [(str(points), f"add_points__{str(player_id)}__{game_id}__{played_at}__{str(points)}") for points in range(21)]
+    buttons = [(str(points), f"overall_points__{str(player_id)}__{game_id}__{played_at}__{str(points)}") for points in range(21)]
     markup = create_markup(buttons, 4)
     await callback.message.edit_text(f"Сколько очков добавляем?", reply_markup=markup)
 
@@ -352,6 +352,19 @@ async def add_point_player(callback):
     buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
     markup = create_markup(buttons)
     await callback.message.edit_text(f"Добавили {points} {'очка' if points==3 else 'очко'}", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("overall_points__"))
+async def add_overall_points_player(callback):
+    print('tut?')
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    overall_points = int(callback.data.split("__")[4])
+    await add_overall_pts(game_id, player_id, overall_points)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text(f"Добавили {overall_points} очков", reply_markup=markup)
 
 
 @router_all_games.callback_query(F.data.startswith("yes_delete__"))

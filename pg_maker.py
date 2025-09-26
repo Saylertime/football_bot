@@ -285,6 +285,19 @@ async def add_points(game_id: int, player_id: int, points: int):
         return row["points"]
 
 
+async def add_overall_pts(game_id: int, player_id: int, overall_pts: int):
+    async with db_connection() as conn:
+        sql = """
+        INSERT INTO game_player_stats (game_id, player_id, overall_pts)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (game_id, player_id)
+        DO UPDATE SET overall_pts = game_player_stats.points + EXCLUDED.overall_pts
+        RETURNING overall_pts;
+        """
+        row = await conn.fetchrow(sql, game_id, player_id, overall_pts)
+        return row["overall_pts"]
+
+
 async def find_players_without_game(game_id):
     async with db_connection() as conn:
         sql = """
@@ -343,7 +356,8 @@ async def results_of_the_game(game_id):
               s.goals,
               s.assists,
               s.autogoals,
-              s.points
+              s.points,
+              s.overall_pts
             FROM game_player_stats s
             JOIN players p ON p.id = s.player_id
             WHERE s.game_id = $1
@@ -388,7 +402,8 @@ async def results_of_the_game(game_id):
     for title, members in groups:
         msg_parts.append(title)
         for r in members:
-            msg_parts.append(f"• {fmt_user(r)}")
+            overall = int(r["overall_pts"] or 0)
+            msg_parts.append(f"• {fmt_user(r)} — за все сегодняшние игры + {overall} {ru_points(overall)}")
         msg_parts.append("")
 
     msg_parts.append("—" * 22)
@@ -404,6 +419,8 @@ async def results_of_the_game(game_id):
 
         name = r["name"]
         username = f"@{r['username']}" if r["username"] else ""
+        overall = int(r["overall_pts"] or 0)
+
         msg_parts.append(f"{num}. {name} — {username}:")
         if goals:
             msg_parts.append(f"   ⚽ Голы: {goals}")
@@ -411,6 +428,7 @@ async def results_of_the_game(game_id):
             msg_parts.append(f"   🤝 Ассисты: {assists}")
         if autogoals:
             msg_parts.append(f"   🤡 Автоголы: {autogoals}")
+        msg_parts.append(f"   🧮 Общие очки: {overall} {ru_points(overall)}")
         msg_parts.append("")
         num += 1
 
@@ -580,8 +598,12 @@ async def get_all_player_totals_assists(start_date=None, end_date=None):
         return await conn.fetch(sql, start_date, end_date)
 
 
-async def get_top_players_by_points(start_date=None, end_date=None):
-    sql = """
+async def get_top_players_by_points(start_date=None, end_date=None, overall_pts=False):
+    order_by = "total_points DESC, total_goals DESC"
+    if overall_pts:
+        order_by = "overall_pts DESC, total_points DESC"
+
+    sql = f"""
         SELECT
           p.id,
           p.name,
@@ -606,6 +628,11 @@ async def get_top_players_by_points(start_date=None, end_date=None):
               WHEN $1::date IS NULL OR $2::date IS NULL
                   OR g.played_at BETWEEN $1 AND $2
               THEN s.points ELSE 0 END), 0) AS total_points,
+        
+          COALESCE(SUM(CASE
+              WHEN $1::date IS NULL OR $2::date IS NULL
+                  OR g.played_at BETWEEN $1 AND $2
+              THEN s.overall_pts ELSE 0 END), 0) AS overall_pts,
 
           COALESCE(COUNT(DISTINCT CASE
               WHEN $1::date IS NULL OR $2::date IS NULL
@@ -616,8 +643,9 @@ async def get_top_players_by_points(start_date=None, end_date=None):
         LEFT JOIN game_player_stats s ON s.player_id = p.id
         LEFT JOIN games g ON g.id = s.game_id
         GROUP BY p.id, p.name, p.username
-        ORDER BY total_points DESC, total_goals DESC
+        ORDER BY {order_by}
     """
+
     async with db_connection() as conn:
         return await conn.fetch(sql, start_date, end_date)
 
