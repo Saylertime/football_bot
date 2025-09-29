@@ -11,7 +11,7 @@ from keyboards.reply.create_markup import create_markup
 
 router_start = Router()
 
-admins = ["68086662", "202583595"]
+admins = ["68086662", "202583595", "469295831"]
 
 
 @router_start.message(CommandStart())
@@ -37,19 +37,24 @@ async def command_start_handler(message):
         print("Нет текущей игры")
 
     buttons = [
+        # ("🍿 Игры", "games"),
+        # ("👥 Игроки", "players"),
+        # ("📊 Статистика", "stats"),
+    ]
+
+
+
+    buttons_for_admins = [
         ("🍿 Игры", "games"),
         ("👥 Игроки", "players"),
         ("📊 Статистика", "stats"),
+        ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
+        ("💰 ДЕНЬГИ", "money"),
     ]
 
     if current_game:
         current_game_button = ("⚽💥 Текущая игра", f"games__{game_id}__{label}")
-        buttons.insert(0, current_game_button)
-
-    buttons_for_admins = [
-        ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
-        ("💰 ДЕНЬГИ", "money"),
-    ]
+        buttons_for_admins.insert(0, current_game_button)
 
     if str(message.from_user.id) in admins:
         for button in buttons_for_admins:
