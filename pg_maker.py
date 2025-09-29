@@ -176,16 +176,27 @@ async def my_stats_in_match(player_id, game_id):
         return stats
 
 
-async def register_player_in_game(game_id, player_id):
+async def register_player_in_game(game_id: int, player_id: int):
     async with db_connection() as conn:
-        await conn.execute(
-            """
-            INSERT INTO game_player_stats (game_id, player_id, goals, assists)
-            VALUES ($1, $2, 0, 0)
-            ON CONFLICT (game_id, player_id) DO NOTHING;
-            """,
-            game_id, player_id
-        )
+        # сколько мест уже занято в основном составе
+        sql_main = """
+            SELECT COUNT(*) AS total
+            FROM game_player_stats s
+            WHERE s.game_id = $1 AND s.is_reserve = FALSE
+        """
+        total = await conn.fetchval(sql_main, game_id)
+
+        CAPACITY = 18
+        is_reserve = total >= CAPACITY
+
+        # сохраняем запись
+        sql_insert = """
+            INSERT INTO game_player_stats (game_id, player_id, is_reserve, joined_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (game_id, player_id)
+            DO UPDATE SET is_reserve = EXCLUDED.is_reserve
+        """
+        await conn.execute(sql_insert, game_id, player_id, is_reserve)
 
 
 async def unregister_player_from_game(game_id, player_id):
@@ -309,24 +320,37 @@ async def find_players_without_game(game_id):
         LEFT JOIN game_player_stats s
           ON s.player_id = p.id
           AND s.game_id   = $1 
-        WHERE s.player_id IS NULL;
+        WHERE s.player_id IS NULL 
+        OR s.is_reserve = TRUE;
     """
         rows = await conn.fetch(sql, game_id)
         return [dict(row) for row in rows]
 
-async def find_players_in_game(game_id):
+
+async def find_players_in_game(game_id, is_reserve=None):
     async with db_connection() as conn:
         sql = """
         SELECT
           p.id,
           p.name,
-          p.username
+          p.username,
+          s.joined_at,
+          s.is_reserve
         FROM players p
-        LEFT JOIN game_player_stats s
-          ON s.player_id = p.id
-        WHERE game_id = $1
-    """
-        rows = await conn.fetch(sql, game_id)
+        JOIN game_player_stats s ON s.player_id = p.id
+        WHERE s.game_id = $1
+        """
+        params = [game_id]
+
+        # если передан фильтр
+        if is_reserve is True:
+            sql += " AND s.is_reserve = TRUE"
+        elif is_reserve is False:
+            sql += " AND s.is_reserve = FALSE"
+
+        sql += " ORDER BY s.joined_at ASC, p.id ASC"
+
+        rows = await conn.fetch(sql, *params)
         return [dict(row) for row in rows]
 
 
@@ -360,7 +384,7 @@ async def results_of_the_game(game_id):
               s.overall_pts
             FROM game_player_stats s
             JOIN players p ON p.id = s.player_id
-            WHERE s.game_id = $1
+            WHERE s.game_id = $1 AND s.is_reserve is false
             ORDER BY s.goals DESC, s.assists DESC;
             """,
             game_id

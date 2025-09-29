@@ -38,7 +38,7 @@ async def get_buttons():
 async def get_msg_money():
     game = await get_latest_game()
     game_id = game['id']
-    going_players = await find_players_in_game(game_id)  # все записавшиеся
+    going_players = await find_players_in_game(game_id, is_reserve=False)
     all_players_from_db = await all_players()
     summa = await find_summa(game_id)
 
@@ -106,7 +106,7 @@ async def toggle_player_in_game(event: CallbackQuery):
     game_id = int(game_id_str)
 
     # Проверяем, записан ли пользователь на игру
-    going_players = await find_players_in_game(game_id)
+    going_players = await find_players_in_game(game_id, is_reserve=False)
     going_usernames = {p["username"] for p in going_players}
 
     if username not in going_usernames:

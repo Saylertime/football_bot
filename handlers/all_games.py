@@ -93,7 +93,7 @@ async def add_player_func(callback):
 async def remove_player_func(callback):
     game_id = callback.data.split("__")[1]
     played_at = callback.data.split("__")[2]
-    players_in_game = await find_players_in_game(int(game_id))
+    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
     buttons = [
         (player["name"], f"remove__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
@@ -117,7 +117,7 @@ async def delete_player_func(callback):
 async def add_goal_func(callback):
     game_id = int(callback.data.split("__")[1])
     played_at = callback.data.split("__")[2]
-    players_in_game = await find_players_in_game(int(game_id))
+    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
     buttons = [
         (player["name"], f"goal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
@@ -178,7 +178,7 @@ async def remove_goal_func(callback):
 async def add_assist_func(callback):
     game_id = int(callback.data.split("__")[1])
     played_at = callback.data.split("__")[2]
-    players_in_game = await find_players_in_game(int(game_id))
+    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
     buttons = [
         (player["name"], f"assist__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
@@ -238,7 +238,7 @@ async def remove_assist_func(callback):
 async def add_autogoal_func(callback):
     game_id = int(callback.data.split("__")[1])
     played_at = callback.data.split("__")[2]
-    players_in_game = await find_players_in_game(int(game_id))
+    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
     buttons = [
         (player["name"], f"autogoal__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
@@ -309,7 +309,7 @@ async def point_player_func(callback):
     game_id = int(callback.data.split("__")[1])
     played_at = callback.data.split("__")[2]
     points = int(callback.data.split("__")[3])
-    players_in_game = await find_players_in_game(int(game_id))
+    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
     buttons = [
         (player["name"], f"add_points__{str(player['id'])}__{game_id}__{played_at}__{points}") for player in players_in_game
     ]
@@ -322,7 +322,7 @@ async def point_player_func(callback):
 async def more_points_player_func(callback):
     game_id = int(callback.data.split("__")[1])
     played_at = callback.data.split("__")[2]
-    players_in_game = await find_players_in_game(int(game_id))
+    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
     buttons = [
         (player["name"], f"added_points__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]

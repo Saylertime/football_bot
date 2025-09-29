@@ -10,7 +10,8 @@ from keyboards.reply.create_markup import create_markup
 
 
 router_start = Router()
-admins = config.ADMINS
+
+admins = ["68086662", "202583595"]
 
 
 @router_start.message(CommandStart())
@@ -39,23 +40,20 @@ async def command_start_handler(message):
         ("🍿 Игры", "games"),
         ("👥 Игроки", "players"),
         ("📊 Статистика", "stats"),
-        # ("📊 Моя статистика", "my_stats"),
-        # ("🌐 Общая стата за всё время", "general_stats"),
-        ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
-        ("💬 ДЕНЬГИ", "money"),
     ]
 
     if current_game:
         current_game_button = ("⚽💥 Текущая игра", f"games__{game_id}__{label}")
         buttons.insert(0, current_game_button)
 
-    # buttons_for_admins = [
-    #     ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
-    # ]
-    #
-    # if str(message.from_user.id) in admins:
-    #     for button in buttons_for_admins:
-    #         buttons.append(button)
+    buttons_for_admins = [
+        ("💬 СООБЩЕНИЕ В ЧАТ", "message"),
+        ("💰 ДЕНЬГИ", "money"),
+    ]
+
+    if str(message.from_user.id) in admins:
+        for button in buttons_for_admins:
+            buttons.append(button)
 
     markup = create_markup(buttons)
 
