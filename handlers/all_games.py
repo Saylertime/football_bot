@@ -21,8 +21,9 @@ async def games_func(message, state):
     if isinstance(message, CallbackQuery):
         message = message.message
     buttons = [
-        ("🎮 Новая игра", "add_game"),
         ("🍿 Все игры", "all_games"),
+        ("🎮 Новая игра", "add_game"),
+        ("↩️ Назад в меню", "start")
     ]
     markup = create_markup(buttons)
     await message.edit_text("Что делаем?", reply_markup=markup)

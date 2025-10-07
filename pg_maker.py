@@ -302,7 +302,7 @@ async def add_overall_pts(game_id: int, player_id: int, overall_pts: int):
         INSERT INTO game_player_stats (game_id, player_id, overall_pts)
         VALUES ($1, $2, $3)
         ON CONFLICT (game_id, player_id)
-        DO UPDATE SET overall_pts = game_player_stats.points + EXCLUDED.overall_pts
+        DO UPDATE SET overall_pts = game_player_stats.overall_pts + EXCLUDED.overall_pts
         RETURNING overall_pts;
         """
         row = await conn.fetchrow(sql, game_id, player_id, overall_pts)
@@ -426,8 +426,7 @@ async def results_of_the_game(game_id):
     for title, members in groups:
         msg_parts.append(title)
         for r in members:
-            overall = int(r["overall_pts"] or 0)
-            msg_parts.append(f"• {fmt_user(r)} — за все сегодняшние игры + {overall} {ru_points(overall)}")
+            msg_parts.append(f"• {fmt_user(r)}")
         msg_parts.append("")
 
     msg_parts.append("—" * 22)
@@ -452,7 +451,7 @@ async def results_of_the_game(game_id):
             msg_parts.append(f"   🤝 Ассисты: {assists}")
         if autogoals:
             msg_parts.append(f"   🤡 Автоголы: {autogoals}")
-        msg_parts.append(f"   🧮 Общие очки: {overall} {ru_points(overall)}")
+        # msg_parts.append(f"   🧮 Общие очки: {overall} {ru_points(overall)}")
         msg_parts.append("")
         num += 1
 

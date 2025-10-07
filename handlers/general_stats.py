@@ -145,7 +145,7 @@ async def general_stats_func(event, state: FSMContext):
         header = "<b>ТАБЛИЦА ЛУЧШИХ ПО ГОЛ+ПАС</b>\n\n"
     elif data == "general_stats_points":
         results = await get_top_players_by_points()
-        header = "<b>ТАБЛИЦА ЛУЧШИХ ПО ОЧКАМ</б>\n\n"
+        header = "<b>ТАБЛИЦА ЛУЧШИХ ПО ОЧКАМ</b>\n\n"
     elif data == "general_stats_overall_pts":
         results = await get_top_players_by_points(overall_pts=True)
         header = "<b>ТАБЛИЦА ЛУЧШИХ ПО PTS</b>\n\n"
