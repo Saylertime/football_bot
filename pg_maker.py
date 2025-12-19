@@ -130,9 +130,7 @@ async def find_player_id(username):
         FROM players
         WHERE username = $1
         """
-        print("USERNAME:", username)
         player_id = await conn.fetchrow(sql, username)
-        print(player_id, "ID TUT")
         return player_id["id"] if player_id else None
 
 
@@ -745,3 +743,101 @@ async def find_summa(game_id):
         return row["summa"] if row else 0
 
 
+async def add_player_to_game_main(game_id: int, player_id: int):
+    async with db_connection() as conn:
+        await conn.execute("""
+            INSERT INTO game_player_stats (game_id, player_id, joined_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (game_id, player_id) DO NOTHING
+        """, game_id, player_id)
+
+async def remove_player_from_game_main(game_id: int, player_id: int):
+    async with db_connection() as conn:
+        await conn.execute("""
+            DELETE FROM game_player_stats
+            WHERE game_id = $1 AND player_id = $2
+        """, game_id, player_id)
+
+
+async def add_player_to_reserve(
+    game_id: int,
+    player_id: int,
+    added_by: int | None = None
+):
+    async with db_connection() as conn:
+        await conn.execute("""
+            INSERT INTO game_reserve (game_id, player_id, added_by)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (game_id, player_id) DO NOTHING
+        """, game_id, player_id, added_by)
+
+async def remove_player_from_reserve(game_id: int, player_id: int):
+    async with db_connection() as conn:
+        await conn.execute("""
+            DELETE FROM game_reserve
+            WHERE game_id = $1 AND player_id = $2
+        """, game_id, player_id)
+
+async def find_reserve_players(game_id: int):
+    async with db_connection() as conn:
+        rows = await conn.fetch("""
+            SELECT
+                p.id,
+                p.name,
+                p.username,
+                r.added_at
+            FROM game_reserve r
+            JOIN players p ON p.id = r.player_id
+            WHERE r.game_id = $1
+            ORDER BY r.added_at ASC, p.id ASC
+        """, game_id)
+
+    return [dict(r) for r in rows]
+
+
+async def pop_first_from_reserve(game_id: int) -> int | None:
+    async with db_connection() as conn:
+        row = await conn.fetchrow("""
+            SELECT player_id
+            FROM game_reserve
+            WHERE game_id = $1
+            ORDER BY added_at ASC
+            LIMIT 1
+        """, game_id)
+
+        if not row:
+            return None
+
+        player_id = row["player_id"]
+
+        await conn.execute("""
+            DELETE FROM game_reserve
+            WHERE game_id = $1 AND player_id = $2
+        """, game_id, player_id)
+
+    return player_id
+
+async def not_in_reserve_players(game_id):
+    async with db_connection() as conn:
+        rows = await conn.fetch("""
+            SELECT
+                p.id,
+                p.name,
+                p.username
+            FROM players p
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM game_player_stats s
+                WHERE s.game_id = $1
+                  AND s.player_id = p.id
+            )
+            AND NOT EXISTS (
+                SELECT 1
+                FROM game_reserve r
+                WHERE r.game_id = $1
+                  AND r.player_id = p.id
+            )
+            ORDER BY p.name ASC, p.id ASC;
+        """, game_id)
+
+    return [dict(r) for r in rows]

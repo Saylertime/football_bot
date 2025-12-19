@@ -9,7 +9,9 @@ from pg_maker import (all_games, find_players_without_game, find_players_in_game
                       register_player_in_game, unregister_player_from_game,
                       add_goal, add_assist, add_autogoal, results_of_the_game,
                       delete_game, remove_goal, remove_assist, remove_autogoal,
-                      find_players_with_something, add_points, add_overall_pts)
+                      find_players_with_something, add_points, add_overall_pts,
+                      add_player_to_reserve, find_reserve_players,
+                      remove_player_from_reserve, not_in_reserve_players)
 
 
 router_all_games = Router()
@@ -56,6 +58,8 @@ async def one_game(callback):
         ("📊 Статистика", f"results__{game_id}__{played_at}"),
         ("🆕 Добавить игрока", f"insert_player__{game_id}__{played_at}"),
         ("❌ Убрать игрока", f"remove_player__{game_id}__{played_at}"),
+        ("🚦 Добавить в резерв", f"insert_in_reserve__{game_id}__{played_at}"),
+        (" 🚫 Убрать из резерва", f"remove_from_reserve__{game_id}__{played_at}"),
         ("3️⃣ +3 очка игроку", f"point_player__{game_id}__{played_at}__3"),
         ("1️⃣ +1 очко игроку", f"point_player__{game_id}__{played_at}__1"),
         ("🔢 + PTS", f"more_points_player__{game_id}__{played_at}"),
@@ -94,10 +98,11 @@ async def add_player_func(callback):
 async def remove_player_func(callback):
     game_id = callback.data.split("__")[1]
     played_at = callback.data.split("__")[2]
-    players_in_game = await find_players_in_game(int(game_id), is_reserve=False)
+    players_in_game = await find_players_in_game(int(game_id))
     buttons = [
         (player["name"], f"remove__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
     ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Игроки, которые зареганы на игру:", reply_markup=markup)
 
@@ -114,6 +119,56 @@ async def delete_player_func(callback):
     await callback.message.edit_text("Игрок удалён из игры", reply_markup=markup)
 
 
+@router_all_games.callback_query(F.data.startswith("insert_in_reserve__"))
+async def insert_in_reserve_func(callback):
+    game_id = callback.data.split("__")[1]
+    played_at = callback.data.split("__")[2]
+    players_not_in_reserve = await not_in_reserve_players(int(game_id))
+    buttons = [
+        (player["name"], f"add_in_reserve__{str(player['id'])}__{game_id}__{played_at}") for player in players_not_in_reserve
+    ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Игроки, которых еще нет в этой игре:", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("add_in_reserve__"))
+async def add_player__in_reserve_func(callback):
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+    await add_player_to_reserve(game_id, player_id)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text("Игрок добавлен в резерв", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("remove_from_reserve__"))
+async def remove_player_from_reserve_func(callback):
+    game_id = callback.data.split("__")[1]
+    played_at = callback.data.split("__")[2]
+    players_in_game = await find_reserve_players(int(game_id))
+    buttons = [
+        (player["name"], f"delete_from_reserve__{str(player['id'])}__{game_id}__{played_at}") for player in players_in_game
+    ]
+    buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
+    markup = create_markup(buttons, columns=2)
+    await callback.message.edit_text("Игроки, которые в резерве:", reply_markup=markup)
+
+
+@router_all_games.callback_query(F.data.startswith("delete_from_reserve__"))
+async def delete_player_from_reserve_func(callback):
+    print(callback.data)
+    player_id = int(callback.data.split("__")[1])
+    game_id = int(callback.data.split("__")[2])
+    played_at = callback.data.split("__")[3]
+
+    await remove_player_from_reserve(game_id, player_id)
+    buttons = [("↩️ Назад в игру", f"games__{game_id}__{played_at}")]
+    markup = create_markup(buttons)
+    await callback.message.edit_text("Игрок удалён из резерва", reply_markup=markup)
+
+
 @router_all_games.callback_query(F.data.startswith("add_goal__"))
 async def add_goal_func(callback):
     game_id = int(callback.data.split("__")[1])
@@ -125,7 +180,6 @@ async def add_goal_func(callback):
     buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Кто забил?", reply_markup=markup)
-
 
 #################
 
@@ -163,6 +217,7 @@ async def remove_goal_func(callback):
     buttons.append(("↩️ Назад в игру", f"games__{game_id}__{played_at}"))
     markup = create_markup(buttons, columns=2)
     await callback.message.edit_text("Кого отменяем?", reply_markup=markup)
+
 
 @router_all_games.callback_query(F.data.startswith("ungoal__"))
 async def remove_goal_func(callback):
