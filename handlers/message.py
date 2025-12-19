@@ -32,7 +32,7 @@ from pg_maker import (
 router_message = Router()
 
 TZ = ZoneInfo("Europe/Budapest")
-CAPACITY = 2
+CAPACITY = 18
 
 # ПЛЮСЫ — только информация (НЕ влияют на места)
 # {game_id: {username: 0/1/2/3}}
