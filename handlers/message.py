@@ -348,7 +348,7 @@ async def toggle_player(event: CallbackQuery):
             if new_need > remaining:
                 # мест не хватает — в резерв
                 try:
-                    await add_player_to_reserve(game_id, player_id, added_by=user.id)
+                    await add_player_to_reserve(game_id, player_id)
                     await remove_player_from_game_main(game_id, player_id)
                     await event.answer("⏳ Мест не хватает — добавил тебя в резерв. \n\n You are in RESERVE", show_alert=True)
                     # плюс можно сохранить (чтобы отображался в резерве), либо сбросить — на твой вкус

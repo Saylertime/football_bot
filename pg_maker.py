@@ -761,15 +761,14 @@ async def remove_player_from_game_main(game_id: int, player_id: int):
 
 async def add_player_to_reserve(
     game_id: int,
-    player_id: int,
-    added_by: int | None = None
+    player_id: int
 ):
     async with db_connection() as conn:
         await conn.execute("""
             INSERT INTO game_reserve (game_id, player_id, added_by)
             VALUES ($1, $2, $3)
             ON CONFLICT (game_id, player_id) DO NOTHING
-        """, game_id, player_id, added_by)
+        """, game_id, player_id)
 
 async def remove_player_from_reserve(game_id: int, player_id: int):
     async with db_connection() as conn:
