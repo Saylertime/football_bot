@@ -765,7 +765,7 @@ async def add_player_to_reserve(
 ):
     async with db_connection() as conn:
         await conn.execute("""
-            INSERT INTO game_reserve (game_id, player_id, added_by)
+            INSERT INTO game_reserve (game_id, player_id)
             VALUES ($1, $2, $3)
             ON CONFLICT (game_id, player_id) DO NOTHING
         """, game_id, player_id)
