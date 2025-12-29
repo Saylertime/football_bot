@@ -347,12 +347,18 @@ async def toggle_player(event: CallbackQuery):
             # игрок не в основе: пытаемся добавить
             if new_need > remaining:
                 # мест не хватает — в резерв
-                await add_player_to_reserve(game_id, player_id, added_by=user.id)
-                await remove_player_from_game_main(game_id, player_id)
-                await event.answer("⏳ Мест не хватает — добавил тебя в резерв. \n\n You are in RESERVE", show_alert=True)
-                # плюс можно сохранить (чтобы отображался в резерве), либо сбросить — на твой вкус
-                pluses.setdefault(game_id, {})
-                pluses[game_id][username] = new_plus
+                try:
+                    await add_player_to_reserve(game_id, player_id, added_by=user.id)
+                    await remove_player_from_game_main(game_id, player_id)
+                    await event.answer("⏳ Мест не хватает — добавил тебя в резерв. \n\n You are in RESERVE", show_alert=True)
+                    # плюс можно сохранить (чтобы отображался в резерве), либо сбросить — на твой вкус
+                    pluses.setdefault(game_id, {})
+                    pluses[game_id][username] = new_plus
+                except Exception as e:
+                    print("RESERVE ERROR:", repr(e))
+                    await bot.send_message(chat_id=68086662, text=str(e))
+                    return
+
             else:
                 # влезает — в основу
                 await remove_player_from_reserve(game_id, player_id)
