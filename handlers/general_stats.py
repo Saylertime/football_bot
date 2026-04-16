@@ -37,7 +37,7 @@ def build_stats_messages(results, header: str):
             f"🤝 Ассисты: {player['total_assists']}\n"
             f"🏟 Сыграно матчей: {player['games_played']}\n"
             f"🏅 Набрано очков: {player['total_points']}\n"
-            f"🏆 Набрано pts: {player['overall_pts']}\n"
+            #f"🏆 Набрано pts: {player['overall_pts']}\n"
         )
         if player.get('total_autogoals', 0) > 0:
             block += f"🤡 Автоголы: {player['total_autogoals']}\n"
