@@ -2,7 +2,7 @@
 
 CURRENT_HOSTNAME := $(shell hostname)
 
-ifeq ($(CURRENT_HOSTNAME), 1738991-cy22118.twc1.net)
+ifeq ($(CURRENT_HOSTNAME), Bots)
     COMPOSE_FILE = docker-compose_prod.yml
 else
     COMPOSE_FILE = docker-compose_local.yml
