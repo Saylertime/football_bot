@@ -50,7 +50,8 @@ async def get_msg_money():
 
 
     msg = (f"Скидываемся по <b>{summa}</b> HUF с человека\n\n"
-           f"https://revolut.me/fedotovp\n\n")
+           f"https://revolut.me/fedotovp\n\n"
+           f"Кому удобно wise: https://wise.com/pay/me/pavelf222\n\n")
 
     if maybe_users:
         msg += "\n<b>Уже сдали:</b>\n"
