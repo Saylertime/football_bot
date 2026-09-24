@@ -620,9 +620,9 @@ async def get_all_player_totals_assists(start_date=None, end_date=None):
 
 
 async def get_top_players_by_points(start_date=None, end_date=None, overall_pts=False):
-    order_by = "total_points DESC, total_goals DESC"
+    order_by = "total_points DESC, total_goals DESC, p.id ASC"
     if overall_pts:
-        order_by = "overall_pts DESC, total_points DESC"
+        order_by = "overall_pts DESC, total_points DESC, p.id ASC"
 
     sql = f"""
         SELECT
@@ -664,6 +664,10 @@ async def get_top_players_by_points(start_date=None, end_date=None, overall_pts=
         LEFT JOIN game_player_stats s ON s.player_id = p.id
         LEFT JOIN games g ON g.id = s.game_id
         GROUP BY p.id, p.name, p.username
+        HAVING COUNT(DISTINCT CASE
+            WHEN $1::date IS NULL OR $2::date IS NULL
+                OR g.played_at BETWEEN $1 AND $2
+            THEN g.id END) > 0
         ORDER BY {order_by}
     """
 

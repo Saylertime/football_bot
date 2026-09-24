@@ -25,7 +25,7 @@ services:
           path: requirements.txt
 
   postgres:
-    image: postgres
+    image: postgres:17
     container_name: football_postgres # NAME
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
